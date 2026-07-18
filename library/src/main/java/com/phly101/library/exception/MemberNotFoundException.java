@@ -1,0 +1,18 @@
+package com.phly101.library.exception;
+
+public class MemberNotFoundException extends MainException {
+
+    public MemberNotFoundException(String message) {
+        super(message);
+    }
+
+    @Override
+    public  String getErrorCode() {
+        return "MEMBER_WAS_NOT_FOUND";
+    }
+
+    @Override
+    public String getErrorMessage() {
+        return "Either you entered a wrong member id or made a typo check the id and try again";
+    }
+}
