@@ -2,8 +2,8 @@ package com.phly101.library.exception;
 
 public class MemberNotFoundException extends MainException {
 
-    public MemberNotFoundException(String message) {
-        super(message);
+    public MemberNotFoundException(String memberId) {
+        super("Member Not found: "+memberId);
     }
 
     @Override

@@ -1,9 +1,12 @@
 package com.phly101.library.exception;
 
-public class DuplicateMemberException extends MainException {
 
-    public DuplicateMemberException(String message) {
-        super(message);
+public class DuplicateMemberException extends MainException {
+    private final String memberId;
+
+    public DuplicateMemberException(String memberId) {
+        super("Duplicate member: " + memberId);
+        this.memberId = memberId;
     }
 
     @Override
@@ -13,6 +16,7 @@ public class DuplicateMemberException extends MainException {
 
     @Override
     public String getErrorMessage() {
-        return "Either enter a valid new member or just use your id for the task you need done.";
+        return "The member ID '" + memberId + "' is already registered. " +
+                "Either enter a valid new member or just use your ID for the task.";
     }
 }

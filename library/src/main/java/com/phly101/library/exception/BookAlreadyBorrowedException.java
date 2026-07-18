@@ -2,8 +2,8 @@ package com.phly101.library.exception;
 
 public class BookAlreadyBorrowedException extends MainException {
 
-    public BookAlreadyBorrowedException(String message) {
-        super(message);
+    public BookAlreadyBorrowedException(String isbn) {
+        super("Book already borrowed: " + isbn);
     }
 
     @Override

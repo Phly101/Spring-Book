@@ -2,8 +2,8 @@ package com.phly101.library.exception;
 
 public class BookNotFoundException extends MainException {
 
-    public BookNotFoundException(String message) {
-        super(message);
+    public BookNotFoundException(String isbn) {
+        super("Book was not found: "+isbn);
     }
 
     @Override
