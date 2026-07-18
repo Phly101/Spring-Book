@@ -3,6 +3,7 @@ package com.phly101.library.service;
 import java.time.LocalDate;
 import java.util.*;
 
+import com.phly101.library.exception.*;
 import com.phly101.library.model.Loan;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,11 @@ public class LibraryService {
     }
 
     public void registerMember(Member... members) {
+        for (Member member : members) {
+            if (findMemberById(member.getMemberId()).isPresent()) {
+                throw new DuplicateMemberException("Member with ID " + member.getMemberId() + "Already exists");
+            }
+        }
         this.members.addAll(Arrays.asList(members));
     }
 
@@ -49,13 +55,13 @@ public class LibraryService {
                 .findFirst();
     }
 
-    public boolean returnBook(Book book) {
-        Loan removedLoan = loans.remove(book.getIsbn());
+    public void returnBook(String isbn) {
+        Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException("Book with isbn: " + isbn + " Was not found!"));
+        Loan removedLoan = loans.remove(isbn);
         if (removedLoan != null) {
             book.returnItem();
-            return true;
         } else {
-            return false;
+            throw new LoanNotFoundException("Loan was not Found! with book isbn: " + isbn);
         }
     }
 
@@ -63,17 +69,17 @@ public class LibraryService {
         return loanDate.plusDays(duePeriod);
     }
 
-    public Optional<Loan> borrowBook(Member member, Book book) {
-
+    public Loan borrowBook(String memberId, String isbn) {
+        Member member = findMemberById(memberId).orElseThrow(() -> new MemberNotFoundException("Member with ID: " + memberId + " Was not found!"));
+        Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException("Book with isbn: " + isbn + " Was not found!"));
         if (book.borrow()) {
             LocalDate today = LocalDate.now();
             Loan newLoan = new Loan(member, book, today, getDueDate(today, member.getDuration()));
             loans.put(book.getIsbn(), newLoan);
             totalTransactions++;
-            return Optional.of(newLoan);
+            return newLoan;
         } else {
-            return Optional.empty();
+            throw new BookAlreadyBorrowedException("Book: " + book.getTitle() + "isbn: " + book.getIsbn() + " was already borrowed");
         }
-
     }
 }
