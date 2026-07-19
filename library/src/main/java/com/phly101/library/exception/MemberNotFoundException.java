@@ -1,9 +1,16 @@
 package com.phly101.library.exception;
 
+import org.springframework.http.HttpStatus;
+
 public class MemberNotFoundException extends MainException {
 
     public MemberNotFoundException(String memberId) {
         super("Member Not found: "+memberId);
+    }
+
+    @Override
+    public HttpStatus getHTTPStatus() {
+        return HttpStatus.NOT_FOUND;
     }
 
     @Override

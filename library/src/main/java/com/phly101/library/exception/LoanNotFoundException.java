@@ -1,9 +1,16 @@
 package com.phly101.library.exception;
 
+import org.springframework.http.HttpStatus;
+
 public class LoanNotFoundException extends MainException {
 
     public LoanNotFoundException(String message) {
         super(message);
+    }
+
+    @Override
+    public HttpStatus getHTTPStatus() {
+        return HttpStatus.NOT_FOUND;
     }
 
     @Override

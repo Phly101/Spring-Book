@@ -1,12 +1,19 @@
 package com.phly101.library.exception;
 
 
+import org.springframework.http.HttpStatus;
+
 public class DuplicateMemberException extends MainException {
     private final String memberId;
 
     public DuplicateMemberException(String memberId) {
         super("Duplicate member: " + memberId);
         this.memberId = memberId;
+    }
+
+    @Override
+    public HttpStatus getHTTPStatus() {
+        return HttpStatus.CONFLICT;
     }
 
     @Override

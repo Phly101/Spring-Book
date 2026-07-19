@@ -1,9 +1,16 @@
 package com.phly101.library.exception;
 
+import org.springframework.http.HttpStatus;
+
 public class BookAlreadyBorrowedException extends MainException {
 
     public BookAlreadyBorrowedException(String isbn) {
         super("Book already borrowed: " + isbn);
+    }
+
+    @Override
+    public HttpStatus getHTTPStatus() {
+        return HttpStatus.CONFLICT;
     }
 
     @Override

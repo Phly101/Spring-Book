@@ -1,5 +1,7 @@
 package com.phly101.library.exception;
 
+import org.springframework.http.HttpStatus;
+
 // Use an abstract class instead of an interface
 public abstract class MainException extends RuntimeException {
 
@@ -10,6 +12,7 @@ public abstract class MainException extends RuntimeException {
     public MainException(String message, Throwable cause) {
         super(message, cause);
     }
+    public abstract HttpStatus getHTTPStatus();
 
     public abstract String getErrorCode();
 
