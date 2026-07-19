@@ -12,7 +12,7 @@ public abstract class MainException extends RuntimeException {
     public MainException(String message, Throwable cause) {
         super(message, cause);
     }
-    public abstract HttpStatus getHTTPStatus();
+    public abstract HttpStatus getHttpstatus();
 
     public abstract String getErrorCode();
 

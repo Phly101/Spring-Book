@@ -9,7 +9,7 @@ public class BookAlreadyBorrowedException extends MainException {
     }
 
     @Override
-    public HttpStatus getHTTPStatus() {
+    public HttpStatus getHttpstatus() {
         return HttpStatus.CONFLICT;
     }
 

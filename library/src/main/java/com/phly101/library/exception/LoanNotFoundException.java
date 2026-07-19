@@ -3,13 +3,15 @@ package com.phly101.library.exception;
 import org.springframework.http.HttpStatus;
 
 public class LoanNotFoundException extends MainException {
+    final String isbn;
 
-    public LoanNotFoundException(String message) {
-        super(message);
+    public LoanNotFoundException(String isbn) {
+        super("Loan was not Found! with book isbn: " + isbn);
+        this.isbn = isbn;
     }
 
     @Override
-    public HttpStatus getHTTPStatus() {
+    public HttpStatus getHttpstatus() {
         return HttpStatus.NOT_FOUND;
     }
 
