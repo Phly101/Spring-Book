@@ -36,7 +36,7 @@ public class LibraryService {
     public void registerMember(Member... members) {
         for (Member member : members) {
             if (findMemberById(member.getMemberId()).isPresent()) {
-                throw new DuplicateMemberException("Member with ID " + member.getMemberId() + "Already exists");
+                throw new DuplicateMemberException(member.getMemberId());
             }
         }
         this.members.addAll(Arrays.asList(members));
@@ -56,12 +56,12 @@ public class LibraryService {
     }
 
     public void returnBook(String isbn) {
-        Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException("Book with isbn: " + isbn + " Was not found!"));
+        Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException(isbn));
         Loan removedLoan = loans.remove(isbn);
         if (removedLoan != null) {
             book.returnItem();
         } else {
-            throw new LoanNotFoundException("Loan was not Found! with book isbn: " + isbn);
+            throw new LoanNotFoundException(isbn);
         }
     }
 
@@ -70,8 +70,8 @@ public class LibraryService {
     }
 
     public Loan borrowBook(String memberId, String isbn) {
-        Member member = findMemberById(memberId).orElseThrow(() -> new MemberNotFoundException("Member with ID: " + memberId + " Was not found!"));
-        Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException("Book with isbn: " + isbn + " Was not found!"));
+        Member member = findMemberById(memberId).orElseThrow(() -> new MemberNotFoundException(memberId));
+        Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException(isbn));
         if (book.borrow()) {
             LocalDate today = LocalDate.now();
             Loan newLoan = new Loan(member, book, today, getDueDate(today, member.getDuration()));
@@ -79,7 +79,7 @@ public class LibraryService {
             totalTransactions++;
             return newLoan;
         } else {
-            throw new BookAlreadyBorrowedException("Book: " + book.getTitle() + "isbn: " + book.getIsbn() + " was already borrowed");
+            throw new BookAlreadyBorrowedException(book.getIsbn());
         }
     }
 }
