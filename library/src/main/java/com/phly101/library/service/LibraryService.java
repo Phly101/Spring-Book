@@ -43,10 +43,14 @@ public class LibraryService {
     }
 
     public Optional<Member> findMemberById(String memberId) {
-        return members
-                .stream()
-                .filter(member -> member.getMemberId().equals(memberId))
-                .findFirst();
+        if (memberId != null) {
+            return members
+                    .stream()
+                    .filter(member -> member.getMemberId().equals(memberId))
+                    .findFirst();
+        } else {
+            return Optional.empty();
+        }
     }
 
     public Optional<Book> findBookByIsbn(String isbn) {
