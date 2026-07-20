@@ -1,5 +1,7 @@
 package com.phly101.library.model;
 
+import java.util.Objects;
+
 public class Book implements Borrowable {
     final private String title;
     final private String author;
@@ -50,5 +52,18 @@ public class Book implements Borrowable {
     @Override
     public String toString() {
         return "Book{title='" + title + "', author='" + author + "', isbn='" + isbn + "', available=" + available + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Book book = (Book) o;
+        return Objects.equals(isbn, book.isbn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isbn);
     }
 }
