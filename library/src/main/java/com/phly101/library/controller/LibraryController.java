@@ -3,6 +3,7 @@ package com.phly101.library.controller;
 import com.phly101.library.dto.*;
 import com.phly101.library.model.*;
 import com.phly101.library.service.LibraryService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class LibraryController {
 
 
     @PostMapping("/books")
-    public ResponseEntity<Book> createBooks(@RequestBody CreateBookRequest createBookRequest) {
+    public ResponseEntity<Book> createBooks(@Valid @RequestBody CreateBookRequest createBookRequest) {
         final Book newBook = new Book(createBookRequest.title(), createBookRequest.author(), createBookRequest.isbn());
         libraryService.addBook(newBook);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{isbn}").buildAndExpand(newBook.getIsbn()).toUri();
@@ -39,7 +40,7 @@ public class LibraryController {
 
 
     @PostMapping("/members")
-    public ResponseEntity<Member> createMember(@RequestBody CreateMemberRequest createMemberRequest) {
+    public ResponseEntity<Member> createMember(@Valid @RequestBody CreateMemberRequest createMemberRequest) {
         switch (createMemberRequest.type()) {
             case STUDENT -> {
                 Student student = new Student(createMemberRequest.name(), createMemberRequest.memberId());
@@ -62,7 +63,7 @@ public class LibraryController {
     }
 
     @PostMapping("/loans")
-    public ResponseEntity<LoanResponse> createLoans(@RequestBody CreateLoanRequest createLoanRequest) {
+    public ResponseEntity<LoanResponse> createLoans(@Valid @RequestBody CreateLoanRequest createLoanRequest) {
         Loan loan = libraryService.borrowBook(createLoanRequest.memberId(), createLoanRequest.isbn());
         LoanResponse loanResponse = new LoanResponse(loan.getBook().getTitle(), loan.getMember().getMemberId(), loan.getLoanDate(), loan.getDueDate());
         return ResponseEntity.status(HttpStatus.CREATED).body(loanResponse);
