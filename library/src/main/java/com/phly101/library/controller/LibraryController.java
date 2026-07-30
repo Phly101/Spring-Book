@@ -1,10 +1,15 @@
 package com.phly101.library.controller;
 
+import com.phly101.library.dto.book.BookResponse;
 import com.phly101.library.dto.book.CreateBookRequest;
 import com.phly101.library.dto.loan.TransactionCountResponse;
 import com.phly101.library.dto.loan.CreateLoanRequest;
 import com.phly101.library.dto.loan.LoanResponse;
 import com.phly101.library.dto.member.CreateMemberRequest;
+import com.phly101.library.dto.member.MemberResponse;
+import com.phly101.library.mapper.BookMapper;
+import com.phly101.library.mapper.LoanMapper;
+import com.phly101.library.mapper.MemberMapper;
 import com.phly101.library.model.*;
 import com.phly101.library.service.LibraryService;
 import jakarta.validation.Valid;
@@ -12,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.net.URI;
 
 
@@ -27,47 +31,35 @@ public class LibraryController {
 
 
     @PostMapping("/books")
-    public ResponseEntity<Book> createBooks(@Valid @RequestBody CreateBookRequest createBookRequest) {
-        final Book newBook = new Book(createBookRequest.title(), createBookRequest.author(), createBookRequest.isbn());
+    public ResponseEntity<BookResponse> createBooks(@Valid @RequestBody CreateBookRequest createBookRequest) {
+        final Book newBook = BookMapper.toEntity(createBookRequest);
         libraryService.addBook(newBook);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{isbn}").buildAndExpand(newBook.getIsbn()).toUri();
-        return ResponseEntity.created(location).body(newBook);
+        return ResponseEntity.created(location).body(BookMapper.toBookResponse(newBook));
 
     }
 
     @GetMapping("/books/{isbn}")
-    public ResponseEntity<Book> findBookById(@PathVariable("isbn") String isbn) {
-        return libraryService.findBookByIsbn(isbn).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<BookResponse> findBookById(@PathVariable("isbn") String isbn) {
+        return libraryService.findBookByIsbn(isbn)
+                .map(BookMapper::toBookResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 
     @PostMapping("/members")
-    public ResponseEntity<Member> createMember(@Valid @RequestBody CreateMemberRequest createMemberRequest) {
-        switch (createMemberRequest.type()) {
-            case STUDENT -> {
-                Student student = new Student(createMemberRequest.name(), createMemberRequest.memberId());
-                libraryService.registerMember(student);
-                URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{memberId}").buildAndExpand(student.getMemberId()).toUri();
-                return ResponseEntity.created(location).body(student);
-            }
-            case FACULTY -> {
-                Faculty faculty = new Faculty(createMemberRequest.name(), createMemberRequest.memberId());
-                libraryService.registerMember(faculty);
-                URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{memberId}").buildAndExpand(faculty.getMemberId()).toUri();
-                return ResponseEntity.created(location).body(faculty);
-            }
-            default -> {
-                return ResponseEntity.badRequest().build();
-            }
-
-        }
-
+    public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody CreateMemberRequest createMemberRequest) {
+        Member member = MemberMapper.toMemberEntity(createMemberRequest);
+        libraryService.registerMember(member);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{memberId}").buildAndExpand(member.getMemberId()).toUri();
+        return ResponseEntity.created(location).body(MemberMapper.toMemberResponse(member));
     }
 
     @PostMapping("/loans")
     public ResponseEntity<LoanResponse> createLoans(@Valid @RequestBody CreateLoanRequest createLoanRequest) {
         Loan loan = libraryService.borrowBook(createLoanRequest.memberId(), createLoanRequest.isbn());
-        LoanResponse loanResponse = new LoanResponse(loan.getBook().getTitle(), loan.getMember().getMemberId(), loan.getLoanDate(), loan.getDueDate());
+        LoanResponse loanResponse = LoanMapper.toLoanResponse(loan);
         return ResponseEntity.status(HttpStatus.CREATED).body(loanResponse);
 
     }
