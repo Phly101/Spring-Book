@@ -1,7 +1,7 @@
 package com.phly101.library.exception.handler;
 
-import com.phly101.library.dto.ErrorResponseRecord;
-import com.phly101.library.dto.ValidationErrorResponseRecord;
+import com.phly101.library.dto.common.ErrorResponseRecord;
+import com.phly101.library.dto.common.ValidationErrorResponseRecord;
 import com.phly101.library.exception.MainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
