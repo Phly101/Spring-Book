@@ -1,4 +1,4 @@
-package com.phly101.library.dto;
+package com.phly101.library.dto.loan;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

@@ -1,4 +1,4 @@
-package com.phly101.library.dto;
+package com.phly101.library.dto.common;
 
 import java.util.Map;
 

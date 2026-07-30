@@ -1,4 +1,4 @@
-package com.phly101.library.dto;
+package com.phly101.library.dto.member;
 
 import com.phly101.library.model.enums.MemberType;
 import jakarta.validation.constraints.NotBlank;
