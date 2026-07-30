@@ -1,19 +1,27 @@
 package com.phly101.library.model;
 
+import com.phly101.library.model.enums.MemberType;
+
 import java.util.Objects;
 
 public abstract class Member {
+    private final MemberType memberType;
     private final String name;
     private final String memberId;
 
-    protected Member(final String name, final String memberId) {
+    protected Member(final String name, final String memberId, final MemberType memberType) {
         this.memberId = memberId;
         this.name = name;
+        this.memberType = memberType;
     }
 
     public abstract int getBooks();
 
     public abstract int getDuration();
+
+    public MemberType getType() {
+        return this.memberType;
+    }
 
     public String getName() {
         return this.name;

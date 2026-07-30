@@ -12,7 +12,7 @@ public class Student extends Member {
     }
 
     public Student(String name, String memberId, int maxBooksAllowed, int loanDurationDays, MemberType type) {
-        super(name, memberId);
+        super(name, memberId, type);
         this.maxBooksAllowed = maxBooksAllowed;
         this.loanDurationDays = loanDurationDays;
         this.type = type;
