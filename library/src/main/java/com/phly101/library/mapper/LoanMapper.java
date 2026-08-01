@@ -22,7 +22,7 @@ public class LoanMapper {
 
     }
 
-    public static Loan toLoanEntity(CreateLoanRequest request, Book book, Member member, LocalDate dueDate) {
+    public static Loan toLoanEntity(Book book, Member member, LocalDate dueDate) {
         return new Loan(member, book, LocalDate.now(), dueDate);
     }
 }
