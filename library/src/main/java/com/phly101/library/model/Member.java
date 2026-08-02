@@ -1,18 +1,40 @@
 package com.phly101.library.model;
 
 import com.phly101.library.model.enums.MemberType;
+import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
+@Entity
+@Table(name = "members")
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Member {
-    private final MemberType memberType;
-    private final String name;
-    private final String memberId;
 
-    protected Member(final String name, final String memberId, final MemberType memberType) {
+    @Id
+    @GeneratedValue
+    private UUID id;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "type")
+    private MemberType memberType;
+    @Column(nullable = false, length = 100)
+    private String name;
+    @Column(nullable = false, length = 20, unique = true, name = "member_id")
+    private String memberId;
+
+    protected Member() {
+    }
+
+    protected Member(String name, String memberId, MemberType memberType) {
         this.memberId = memberId;
         this.name = name;
         this.memberType = memberType;
+    }
+
+    // getters
+    public UUID getId() {
+        return id;
     }
 
     public abstract int getBooks();
