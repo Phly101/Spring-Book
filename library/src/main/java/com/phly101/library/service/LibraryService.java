@@ -5,6 +5,8 @@ import java.util.*;
 
 import com.phly101.library.exception.*;
 import com.phly101.library.model.Loan;
+import com.phly101.library.repository.BookRepository;
+import com.phly101.library.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
 import com.phly101.library.model.Book;
@@ -12,13 +14,13 @@ import com.phly101.library.model.Member;
 
 @Service
 public class LibraryService {
-    private final List<Member> members;
-    private final List<Book> books;
+    private final MemberRepository memberRepository;
+    private final BookRepository bookRepository;
     private final Map<String, Loan> loans;
 
-    public LibraryService() {
-        this.books = new ArrayList<>();
-        this.members = new ArrayList<>();
+    public LibraryService(MemberRepository memberRepository, BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+        this.memberRepository = memberRepository;
         this.loans = new HashMap<>();
     }
 
@@ -29,34 +31,44 @@ public class LibraryService {
         return totalTransactions;
     }
 
-    public void addBook(Book... booksToAdd) {
-        this.books.addAll(Arrays.asList(booksToAdd));
+    public Book addBook(Book book) {
+        if (findBookByIsbn(book.getIsbn()).isPresent()) {
+            throw new BookAlreadyExistsException(book.getIsbn());
+        }
+        return bookRepository.save(book);
     }
 
-    public void registerMember(Member... members) {
-        for (Member member : members) {
-            if (findMemberById(member.getMemberId()).isPresent()) {
-                throw new DuplicateMemberException(member.getMemberId());
+    public List<Book> addBooks(Book... books) {
+        for (Book book : books) {
+            if (findBookByIsbn(book.getIsbn()).isPresent()) {
+                throw new BookAlreadyExistsException(book.getIsbn());
             }
         }
-        this.members.addAll(Arrays.asList(members));
+        return bookRepository.saveAll(Arrays.asList(books));
+    }
+
+    public Member registerMember(Member member) {
+        if (findMemberById(member.getMemberId()).isPresent()) {
+            throw new DuplicateMemberException(member.getMemberId());
+        }
+        return memberRepository.save(member);
+
     }
 
     public Optional<Member> findMemberById(String memberId) {
         if (memberId != null) {
-            return members
-                    .stream()
-                    .filter(member -> member.getMemberId().equals(memberId))
-                    .findFirst();
+            return memberRepository.findByMemberId(memberId);
         } else {
             return Optional.empty();
         }
     }
 
     public Optional<Book> findBookByIsbn(String isbn) {
-        return books.stream()
-                .filter(book -> book.getIsbn().equals(isbn))
-                .findFirst();
+        if (isbn != null) {
+            return bookRepository.findByIsbn(isbn);
+        } else {
+            return Optional.empty();
+        }
     }
 
     public void returnBook(String isbn) {
