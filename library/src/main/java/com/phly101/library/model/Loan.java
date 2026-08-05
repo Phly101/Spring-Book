@@ -71,6 +71,10 @@ public class Loan {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+    // setters
+    public void setReturnDate(LocalDate returnDate) {
+        this.returnDate = returnDate;
+    }
 
 
 }
