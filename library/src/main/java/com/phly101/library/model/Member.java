@@ -52,6 +52,12 @@ public abstract class Member {
     public String getMemberId() {
         return this.memberId;
     }
+    // setters
+
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @Override
     public String toString() {
