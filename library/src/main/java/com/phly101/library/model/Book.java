@@ -54,6 +54,15 @@ public class Book implements Borrowable {
     public String getIsbn() {
         return this.isbn;
     }
+    // setters
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
     //------------------------------------------------------------
     @Override
