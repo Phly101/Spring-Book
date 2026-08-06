@@ -15,7 +15,7 @@ public class LoanMapper {
         return new LoanResponse(
                 book.getTitle(),
                 member.getMemberId(),
-                loan.loanDate(),
+                loan.getLoanDate(),
                 loan.getDueDate()
 
         );
