@@ -1,76 +1,48 @@
 package com.phly101.library.service;
 
-import com.phly101.library.exception.*;
+import com.phly101.library.exception.BookAlreadyBorrowedException;
+import com.phly101.library.exception.BookNotFoundException;
+import com.phly101.library.exception.LoanNotFoundException;
+import com.phly101.library.exception.MemberNotFoundException;
 import com.phly101.library.model.Book;
 import com.phly101.library.model.Loan;
 import com.phly101.library.model.Member;
 import com.phly101.library.model.Student;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class LibraryServiceTest {
+    @Mock
+    private BookService bookService;
+    @Mock
+    private MemberService memberService;
+    @Mock
+    private LoanService loanService;
+
+    @InjectMocks
     private LibraryService libraryService;
 
-    @BeforeEach
-    void setUp() {
-        // activate
-        libraryService = new LibraryService();
-    }
 
     //Helpers
-    private Member registerTestMember() {
-        Member member = new Student("tester1", "tester/123");
-        libraryService.registerMember(member);
-        return member;
+    private Member addTestMember() {
+        return new Student("tester1", "tester/123");
     }
 
     private Book addTestBook() {
-        Book book = new Book("Trail of the Tyrant", "Basel", "1234567891");
-        libraryService.addBook(book);
-        return book;
-    }
-
-    private Loan borrowedBookSetup() {
-        final Member member = registerTestMember();
-        final Book book = addTestBook();
-        return libraryService.borrowBook(member.getMemberId(), book.getIsbn());
-    }
-
-    @Nested
-    class LibraryServiceRegisterMemberTests {
-
-        @Test
-        void shouldRegisterMemberSuccessfully() {
-            // arrange
-            final Member member = new Student("tester", "tester/123");
-
-            //act
-            libraryService.registerMember(member);
-            //assert
-            Optional<Member> found = libraryService.findMemberById(member.getMemberId());
-            assertTrue(found.isPresent());
-            assertEquals(member, found.get());
-        }
-
-        @Test
-        void shouldThrowWhenDuplicateId() {
-            // arrange
-            final Member member1 = new Student("tester1", "tester/123");
-            final Member member2 = new Student("tester2", "tester/123");
-            // assert
-            assertThrows(DuplicateMemberException.class, () -> {
-                // act
-                libraryService.registerMember(member1);
-                libraryService.registerMember(member2);
-
-            });
-
-        }
+        return new Book("Fallen Grace", "William Becett", "0987654321123");
     }
 
     @Nested
@@ -78,39 +50,73 @@ class LibraryServiceTest {
 
         @Test
         void shouldReturnCorrectlyFormedLoan() {
-            Loan loan = borrowedBookSetup();
-            assertEquals("Trail of the Tyrant", loan.getBook().getTitle());
-            assertEquals("tester/123", loan.getMember().getMemberId());
+            //arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            Loan expectedLoan = new Loan(member, book, LocalDate.now(), LocalDate.now().plusDays(member.getDuration()));
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.of(member));
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(loanService.createLoan(any(Loan.class))).thenReturn(expectedLoan);
+            //act
+            Loan result = libraryService.borrowBook(member.getMemberId(), book.getIsbn());
+
+            //assert
+            assertEquals("Fallen Grace", result.getBook().getTitle());
+            assertEquals("tester/123", result.getMember().getMemberId());
         }
 
         @Test
         void shouldIncrementTotalTransactions() {
-            borrowedBookSetup();
-            assertEquals(1, libraryService.getTotalTransactions());
+            //arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            Loan expectedLoan = new Loan(member, book, LocalDate.now(), LocalDate.now().plusDays(member.getDuration()));
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.of(member));
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(loanService.createLoan(any(Loan.class))).thenReturn(expectedLoan);
+            //act
+            libraryService.borrowBook(member.getMemberId(), book.getIsbn());
+            int result = libraryService.getTotalTransactions();
+            assertEquals(1, result);
         }
 
         @Test
         void shouldThrowWhenAlreadyBorrowed() {
-            Loan loan = borrowedBookSetup();
+            // arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            book.borrow();
+
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.of(member));
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+
+            //act+assert
             assertThrows(BookAlreadyBorrowedException.class, () ->
-                    libraryService.borrowBook(loan.getMember().getMemberId(), loan.getBook().getIsbn())
-            );
+                    libraryService.borrowBook(member.getMemberId(), book.getIsbn()));
         }
 
         @Test
         void shouldThrowWhenMemberNotFound() {
+            // arrange
+            Member member = addTestMember();
             Book book = addTestBook();
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.empty());
+            //act+assert
             assertThrows(MemberNotFoundException.class, () ->
-                    libraryService.borrowBook("9999999999", book.getIsbn())
-            );
+                    libraryService.borrowBook(member.getMemberId(), book.getIsbn()));
         }
 
         @Test
         void shouldThrowWhenBookNotFound() {
-            Member member = registerTestMember();
+            // arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.of(member));
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.empty());
+
+            //act+assert
             assertThrows(BookNotFoundException.class, () ->
-                    libraryService.borrowBook(member.getMemberId(), "9999999999")
-            );
+                    libraryService.borrowBook(member.getMemberId(), book.getIsbn()));
         }
 
     }
@@ -120,28 +126,58 @@ class LibraryServiceTest {
 
         @Test
         void shouldReturnBookSuccessfully() {
-            // arrange
-            Loan loan = borrowedBookSetup();
-            Book book = loan.getBook();
+            //arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            book.borrow();
+            Loan expectedLoan = new Loan(member, book, LocalDate.now(), LocalDate.now().plusDays(member.getDuration()));
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.of(member));
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(loanService.findLoan(member.getMemberId(), book.getIsbn())).thenReturn(expectedLoan);
             //act
-            libraryService.returnBook(book.getIsbn());
-            //assert
-            assertTrue(book.isAvailable());
+            libraryService.returnBook(book.getIsbn(), member.getMemberId());
+
+            assertAll("Return outCome",
+                    () -> assertTrue(book.isAvailable()),
+                    () -> assertNotNull(expectedLoan.getReturnDate())
+            );
+        }
+        @Test
+        void shouldThrowWhenMemberNotFound() {
+            // arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.empty());
+            //act+assert
+            assertThrows(MemberNotFoundException.class, () ->
+                    libraryService.returnBook(book.getIsbn(), member.getMemberId()));
         }
 
         @Test
         void shouldThrowWhenBookNotFound() {
+            // arrange
+            Member member = addTestMember();
+            Book book = addTestBook();
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.empty());
+            //act+assert
             assertThrows(BookNotFoundException.class, () ->
-                    libraryService.returnBook("awdawwadwada")
-            );
+                    libraryService.returnBook(book.getIsbn(), member.getMemberId()));
         }
 
         @Test
         void shouldThrowWhenLoanNotFound() {
+            // arrange
+            Member member = addTestMember();
             Book book = addTestBook();
+            when(memberService.findMemberById(member.getMemberId())).thenReturn(Optional.of(member));
+            when(bookService.findBookByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(loanService.findLoan(member.getMemberId(), book.getIsbn()))
+                    .thenThrow(new LoanNotFoundException(book.getIsbn()));
+
+            //act+assert
             assertThrows(LoanNotFoundException.class, () ->
-                    libraryService.returnBook(book.getIsbn())
-            );
+                    libraryService.returnBook(book.getIsbn(), member.getMemberId()));
         }
 
     }

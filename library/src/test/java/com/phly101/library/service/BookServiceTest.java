@@ -1,6 +1,8 @@
 package com.phly101.library.service;
 
 import com.phly101.library.exception.BookAlreadyExistsException;
+import com.phly101.library.exception.BookCurrentlyBorrowedException;
+import com.phly101.library.exception.BookNotFoundException;
 import com.phly101.library.model.Book;
 import com.phly101.library.repository.BookRepository;
 import org.junit.jupiter.api.Nested;
@@ -130,4 +132,71 @@ public class BookServiceTest {
             verify(bookRepository, never()).saveAll(any());
         }
     }
+
+    @Nested
+    class UpdateBookTests {
+
+        @Test
+        void BookService_UpdateBookWhenFound_Test() {
+            // arrange
+            Book book = addTestBook();
+            when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            //act
+            Book result = bookService.updateBook(book.getIsbn(), "bla bla", "Bola");
+            //assert
+            assertAll("Book details",
+                    () -> assertEquals("bla bla", result.getTitle()),
+                    () -> assertEquals("Bola", result.getAuthor())
+            );
+        }
+
+        @Test
+        void BookService_UpdateBookWhenNotFound_Test() {
+            // arrange
+            Book book = addTestBook();
+            when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.empty());
+            //act+ assert
+            assertThrows(BookNotFoundException.class, () -> bookService.updateBook(book.getIsbn(), book.getTitle(), book.getAuthor()));
+
+        }
+    }
+
+    @Nested
+    class DeleteBookTests {
+        @Test
+        void BookService_DeleteBookWhenFoundWithNoLoan_Test() {
+            // arrange
+            Book book = addTestBook();
+            when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(loanService.isBookBorrowed(book.getIsbn())).thenReturn(false);
+            //act
+            bookService.deleteBook(book.getIsbn());
+            //assert
+            verify(bookRepository, times(1)).delete(book);
+        }
+
+        @Test
+        void BookService_DeleteBookWhenNotFound_Test() {
+            // arrange
+            Book book = addTestBook();
+            when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.empty());
+            //act+ assert
+            assertThrows(BookNotFoundException.class, () -> bookService.deleteBook(book.getIsbn()));
+            verify(bookRepository, never()).delete(any());
+
+        }
+
+        @Test
+        void BookService_DeleteBookWhenHaveLoan_Test() {
+            // arrange
+            Book book = addTestBook();
+            when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
+            when(loanService.isBookBorrowed(book.getIsbn())).thenReturn(true);
+            //act+assert
+            assertThrows(BookCurrentlyBorrowedException.class, () -> bookService.deleteBook(book.getIsbn()));
+            verify(bookRepository, never()).delete(any());
+
+        }
+    }
+
 }
