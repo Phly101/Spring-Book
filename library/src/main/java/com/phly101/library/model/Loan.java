@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -74,6 +75,10 @@ public class Loan {
     // setters
     public void setReturnDate(LocalDate returnDate) {
         this.returnDate = returnDate;
+    }
+    @PrePersist
+    private  void prePersist() {
+        this.createdAt = LocalDateTime.now();
     }
 
 

@@ -52,4 +52,9 @@ public class Student extends Member {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    @PrePersist
+    private  void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

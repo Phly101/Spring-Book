@@ -60,4 +60,8 @@ public class Faculty extends Member {
     public FacultyRole getFacultyRole() {
         return facultyRole;
     }
+    @PrePersist
+    private  void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

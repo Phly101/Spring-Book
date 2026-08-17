@@ -2,6 +2,7 @@ package com.phly101.library.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
@@ -105,5 +106,9 @@ public class Book implements Borrowable {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
     }
 }
