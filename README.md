@@ -1,6 +1,6 @@
 # Spring-Book — Library Management System
 
-A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This READ[...]
+A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This R[...]
 
 ---
 
@@ -10,12 +10,14 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
 - [Tech Stack](#tech-stack)
 - [Architecture Overview](#architecture-overview)
 - [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
 - [Project Timeline](#project-timeline)
   - [Phase 0: Foundations](#phase-0-foundations)
   - [Phase 1: Database Layer](#phase-1-database-layer)
   - [Phase 2: REST API Layer](#phase-2-rest-api-layer)
   - [Phase 3: Architecture Refactor](#phase-3-architecture-refactor)
   - [Phase 4: Testing Suite](#phase-4-testing-suite)
+  - [Phase 5: API Documentation](#phase-5-api-documentation)
 - [Key Design Decisions](#key-design-decisions)
 - [Lessons Learned](#lessons-learned)
 - [Roadmap / What's Next](#roadmap--whats-next)
@@ -42,7 +44,7 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 | Database | PostgreSQL |
 | Build Tool | Maven |
 | Testing | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
-| API Docs *(planned)* | Postman / Swagger (OpenAPI) |
+| API Docs | Swagger/OpenAPI 3.0 |
 | Security *(deferred)* | Spring Security / JWT — deferred to a future project (SkillBit backend) |
 
 ---
@@ -186,6 +188,65 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
 
 ---
 
+## API Documentation
+
+The API is fully documented using **Swagger/OpenAPI 3.0**, accessible at `http://localhost:8080/swagger-ui.html` when the application is running.
+
+### Endpoint Coverage
+
+All six REST endpoints are documented with request/response schemas, parameter details, and real-world examples:
+
+**Books:**
+- `POST /books` — Add a new book to the catalog
+- `GET /books/{isbn}` — Fetch a specific book by ISBN
+
+**Members:**
+- `POST /members` — Register a new library member (Student or Faculty)
+- `PUT /members/{id}` — Update member information
+
+**Loans:**
+- `POST /loans` — Borrow a book (creates an active loan)
+- `DELETE /loans` — Return a book (closes the loan via soft-delete)
+
+### Request/Response Schemas
+
+The following schemas are automatically generated and documented in Swagger:
+
+**Request DTOs:**
+- `CreateBookRequest` — ISBN, title, author
+- `UpdateBookRequest` — Allows title/author updates
+- `CreateMemberRequest` — Name, type (STUDENT/FACULTY), optional Faculty role
+- `UpdateMemberRequest` — Name and role updates
+- `CreateLoanRequest` — ISBN and member ID
+
+**Response DTOs:**
+- `BookResponse` — Book details with ISBN, title, author
+- `MemberResponse` — Member info with name, type, and unique member ID
+- `LoanResponse` — Loan history including borrow/return dates
+- `TransactionCountResponse` — Total number of completed transactions
+
+### Example Endpoints
+
+**Fetch a book by ISBN:**
+
+![Swagger - GET Book by ISBN](docs/swagger-get-book.png)
+
+Request parameters and response codes with example JSON bodies.
+
+**Available Schemas:**
+
+![Swagger - All Schemas](docs/swagger-schemas.png)
+
+Complete list of request/response objects with field descriptions and enum values (e.g., `MemberType: STUDENT | FACULTY`).
+
+**Detailed Schema Example:**
+
+![Swagger - MemberResponse Schema](docs/swagger-member-response-schema.png)
+
+Full schema breakdown showing `type` (with enum options), `name`, `memberId`, and example values.
+
+---
+
 ## Project Timeline
 
 ### Phase 0: Foundations
@@ -236,6 +297,13 @@ Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTe
   - **Multi-book/loan scenario** — register a member, add multiple books, borrow several, and verify state via a mix of real `GET` endpoints and direct repository assertions (since not every entity [...]
 - Cleanup handled via `@AfterEach`, explicitly deleting `Loan` rows before `Member`/`Book` rows to respect foreign key dependency order.
 
+### Phase 5: API Documentation
+
+- Integrated **Springdoc OpenAPI** for automatic Swagger/OpenAPI 3.0 generation from controller annotations.
+- Documented all six endpoints with `@Operation`, `@Parameter`, and `@ApiResponse` annotations.
+- Added comprehensive request/response examples and enum documentation via `@Schema` annotations.
+- Verified all DTOs and error responses appear correctly in the Swagger UI explorer.
+
 ---
 
 ## Key Design Decisions
@@ -269,7 +337,7 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] Controller slice tests (`@WebMvcTest`)
 - [x] Repository integration tests (`@DataJpaTest`)
 - [x] End-to-end tests (`@SpringBootTest`)
-- [ ] API documentation (Postman / Swagger)
+- [x] API documentation (Swagger/OpenAPI)
 - [ ] Portfolio packaging
 
 **Deliberately deferred:** Spring Security / JWT authentication — this project's scope doesn't have enough of a real access-control concept to justify it. Security will instead be built properly in [...]
