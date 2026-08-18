@@ -248,11 +248,13 @@ Complete list of request/response objects with field descriptions and enum value
 
 Full schema breakdown showing `type` (with enum options), `name`, `memberId`, and example values.
 
-**Detailed Endpoints:**
+**API Endpoints Overview**
 
 <img width="1282" height="659" alt="Sleekshot 2026-08-18 11-33-17" src="https://github.com/user-attachments/assets/2db5300c-e24b-4b86-880f-5f43aad63903" />
 
- A comprehensive view of the REST API endpoints available for managing books, library members, and loan transactions.
+
+A comprehensive view of the REST API endpoints available for managing books, library members, and loan transactions.
+
 ---
 
 ## Project Timeline
