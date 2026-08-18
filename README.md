@@ -2,9 +2,6 @@
 
 A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This README documents the full journey, decisions, and lessons learned along the way — from the first OOP phase in plain Java to a fully tested, end-to-end verified REST API.
 
-**Author:** Basel El Rafei ([@Phly101](https://github.com/Phly101))
-**Repo:** [github.com/Phly101/Spring-Book](https://github.com/Phly101/Spring-Book)
-
 ---
 
 ## Table of Contents
