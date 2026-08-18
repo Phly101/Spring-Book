@@ -229,19 +229,22 @@ The following schemas are automatically generated and documented in Swagger:
 
 **Fetch a book by ISBN:**
 
-![Swagger - GET Book by ISBN](docs/swagger-get-book.png)
+<img width="1447" height="916" alt="WhatsApp Image 2026-08-18 at 11 22 46" src="https://github.com/user-attachments/assets/a1b347b5-074d-413c-b807-2817ca2add0a" />
+
 
 Request parameters and response codes with example JSON bodies.
 
 **Available Schemas:**
 
-![Swagger - All Schemas](docs/swagger-schemas.png)
+<img width="1427" height="616" alt="WhatsApp Image 2026-08-18 at 11 24 04" src="https://github.com/user-attachments/assets/efbf9471-a6c5-4825-bc3b-8168a570a47d" />
+
 
 Complete list of request/response objects with field descriptions and enum values (e.g., `MemberType: STUDENT | FACULTY`).
 
 **Detailed Schema Example:**
 
-![Swagger - MemberResponse Schema](docs/swagger-member-response-schema.png)
+<img width="1437" height="512" alt="WhatsApp Image 2026-08-18 at 11 23 52" src="https://github.com/user-attachments/assets/5d39fa12-4d58-4a64-aef8-3e7392ceb926" />
+
 
 Full schema breakdown showing `type` (with enum options), `name`, `memberId`, and example values.
 
