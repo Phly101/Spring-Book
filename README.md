@@ -71,35 +71,7 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
 ## Project Structure
 
 ```
-Z:\Spring
-├── .git/
-├── .idea/
-│   ├── dataSources/
-│   │   └── ee1d57e0-0b18-47c8-b872-eb1b12ea7b75/
-│   │       └── storage_v2/
-│   │           ├── _src_/
-│   │           │   └── database/
-│   │           │       └── postgres.edMnLQ/
-│   │           │           ├── schema/
-│   │           │           │   ├── public.abK9xQ.meta
-│   │           │           │   ├── pg_catalog.0S1ZNQ.meta
-│   │           │           │   └── information_schema.FNRwLQ.meta
-│   │           │           └── postgres.edMnLQ.meta
-│   │   ├── inspectionProfiles/
-│   │   │   └── Project_Default.xml
-│   │   ├── .gitignore
-│   │   ├── compiler.xml
-│   │   ├── dataSources.xml
-│   │   ├── dataSources.local.xml
-│   │   ├── data_sources_history.xml
-│   │   ├── encodings.xml
-│   │   ├── jarRepositories.xml
-│   │   ├── misc.xml
-│   │   ├── modules.xml
-│   │   ├── Spring.iml
-│   │   ├── vcs.xml
-│   │   └── workspace.xml
-└── library/
+ library/
     ├── .git*/
     ├── .mvn/
     │   └── wrapper/
