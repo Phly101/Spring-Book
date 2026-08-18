@@ -343,4 +343,4 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] API documentation (Swagger/OpenAPI)
 - [ ] Portfolio packaging
 
-**Deliberately deferred:** Spring Security / JWT authentication — this project's scope doesn't have enough of a real access-control concept to justify it. Security will instead be built properly in [...]
+**Deliberately deferred:** Spring Security / JWT authentication — this project's scope doesn't have enough of a real access-control concept to justify it. Security will instead be built properly in a coming project.
