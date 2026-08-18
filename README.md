@@ -45,7 +45,7 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 | Build Tool | Maven |
 | Testing | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
 | API Docs | Swagger/OpenAPI 3.0 |
-| Security *(deferred)* | Spring Security / JWT — deferred to a future project (SkillBit backend) |
+| Security *(deferred)* | Spring Security / JWT — deferred to a future project  |
 
 ---
 
