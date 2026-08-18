@@ -229,7 +229,7 @@ The following schemas are automatically generated and documented in Swagger:
 
 **Fetch a book by ISBN:**
 
-<img width="1447" height="916" alt="WhatsApp Image 2026-08-18 at 11 22 46" src="https://github.com/user-attachments/assets/a1b347b5-074d-413c-b807-2817ca2add0a" />
+<img width="1281" height="897" alt="Sleekshot 2026-08-18 11-32-54" src="https://github.com/user-attachments/assets/0878fa3a-8ab7-41ce-b30d-1b7dbd1916e4" />
 
 
 Request parameters and response codes with example JSON bodies.
@@ -248,6 +248,11 @@ Complete list of request/response objects with field descriptions and enum value
 
 Full schema breakdown showing `type` (with enum options), `name`, `memberId`, and example values.
 
+**Detailed Endpoints:**
+
+<img width="1282" height="659" alt="Sleekshot 2026-08-18 11-33-17" src="https://github.com/user-attachments/assets/2db5300c-e24b-4b86-880f-5f43aad63903" />
+
+ A comprehensive view of the REST API endpoints available for managing books, library members, and loan transactions.
 ---
 
 ## Project Timeline
