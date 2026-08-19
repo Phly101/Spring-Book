@@ -1,6 +1,6 @@
 # Spring-Book — Library Management System
 
-A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This R[...]
+A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This README documents the full journey, decisions, and lessons learned along the way — from the first OOP phase in plain Java to a fully tested, end-to-end verified REST API.
 
 ---
 
@@ -23,14 +23,13 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
 - [Roadmap / What's Next](#roadmap--whats-next)
 
 ---
-
 ## Motivation & Learning Approach
-
-After attempting several Spring Boot courses and repeatedly feeling lost from jumping in at mid-concept entry points, I settled on an approach that mirrored how I successfully learned Flutter: **langu[...]
-
-This project was built through a strict **mentor-only dynamic**: tasks were assigned, code was reviewed, and hints were given — but code was only written *for* me on explicit request. I wrote code f[...]
-
-Before touching Spring, I built a plain **Java/Kotlin Library Management System** through six OOP phases (encapsulation, inheritance, abstraction, interfaces, polymorphism, composition/statics) to loc[...]
+ 
+After attempting several Spring Boot courses and repeatedly feeling lost from jumping in at mid-concept entry points, I settled on an approach that mirrored how I successfully learned Flutter: **language fundamentals first, build a real project second, framework theory woven in as needed** — rather than passively following tutorials.
+ 
+This project was built through a strict **mentor-only dynamic**: tasks were assigned, code was reviewed, and hints were given — but code was only written *for* me on explicit request. I wrote code first and submitted it for review, rather than asking for solutions outright.
+ 
+Before touching Spring, I built a plain **Java/Kotlin Library Management System** through six OOP phases (encapsulation, inheritance, abstraction, interfaces, polymorphism, composition/statics) to lock down fundamentals — deliberately mixing Java and Kotlin syntax to compare them directly, using my existing Flutter/Dart background as a mental anchor throughout.
 
 ---
 
@@ -74,12 +73,6 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
 
 ```
  library/
-    ├── .git*/
-    ├── .mvn/
-    │   └── wrapper/
-    │       └── maven-wrapper.properties
-    ├── .vscode/
-    │   └── settings.json
     ├── src/
     │   ├── main/
     │   │   ├── java/com/phly101/library/
@@ -158,21 +151,6 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
     │               ├── LoanServiceTest.java
     │               ├── LibraryServiceTest.java
     │               └── MemberServiceTest.java
-    ├── target/
-    │   ├── classes/
-    │   ├── maven-archiver/
-    │   ├── maven-status/
-    │   ├── surefire-reports/
-    │   ├── test-classes/
-    │   ├── .gitignore
-    │   ├── HELP.md
-    │   ├── library-0.0.1-SNAPSHOT.jar
-    │   └── library-0.0.1-SNAPSHOT.jar.original
-    ├── .gitattributes
-    ├── .gitignore
-    ├── HELP.md
-    ├── mvnw
-    ├── mvnw.cmd
     └── pom.xml
 ```
 
