@@ -236,84 +236,69 @@ A comprehensive view of the REST API endpoints available for managing books, lib
 ---
 
 ## Project Timeline
-
+ 
 ### Phase 0: Foundations
-
-- Built a plain Java/Kotlin **Library Management System** through six OOP phases (encapsulation → inheritance → abstraction → interfaces → polymorphism → composition/statics), deliberately a[...]
+ 
+- Built a plain Java/Kotlin **Library Management System** through six OOP phases (encapsulation → inheritance → abstraction → interfaces → polymorphism → composition/statics), deliberately alternating between Java and Kotlin to compare syntax directly.
 - Covered Kotlin fundamentals in depth (null safety, data classes, scope functions, extension functions, companion objects, coroutines overview) with Dart as the comparison baseline.
-- Watched a FreeCodeCamp JPA course independently to cover inheritance strategies, `@MappedSuperClass`, `@Embeddable`/`@EmbeddedId`, derived queries, `@Modifying`, named queries, and Specifications be[...]
-
+- Watched a FreeCodeCamp JPA course independently to cover inheritance strategies, `@MappedSuperClass`, `@Embeddable`/`@EmbeddedId`, derived queries, `@Modifying`, named queries, and Specifications before diving into Spring Data JPA hands-on.
 ### Phase 1: Database Layer
-
+ 
 - Designed the PostgreSQL schema from scratch:
   - **JOINED inheritance** for the member hierarchy (`members` base table, `students` and `faculties` subclass tables)
   - `books` and `loans` tables with UUID primary keys, enums, `CHECK` constraints, and foreign keys
-- Annotated all five model classes as JPA entities, working through key concepts: `@Inheritance(JOINED)`, `@PrimaryKeyJoinColumn`, `@Enumerated(STRING)`, `@ManyToOne`, `updatable = false`, correct no-[...]
-
+- Annotated all five model classes as JPA entities, working through key concepts: `@Inheritance(JOINED)`, `@PrimaryKeyJoinColumn`, `@Enumerated(STRING)`, `@ManyToOne`, `updatable = false`, correct no-arg constructor access level for JPA, and why Java records can't be JPA entities.
 ### Phase 2: REST API Layer
-
+ 
 - Built six REST endpoints across `BookController`, `MemberController`, `LoanController`.
 - Designed a custom exception hierarchy: an abstract `MainException` base class with concrete subclasses, handled globally via `@RestControllerAdvice`.
 - Introduced DTOs as Java **records**, with dedicated mapper classes (`BookMapper`, `MemberMapper`, `LoanMapper`) to keep entities decoupled from the API surface.
-- Added Bean Validation (`@Valid`, `@NotBlank`, `@NotNull`, `@Size`, `@Pattern`) and extended the global exception handler to cover `MethodArgumentNotValidException` and `HttpMessageNotReadableExcepti[...]
-
+- Added Bean Validation (`@Valid`, `@NotBlank`, `@NotNull`, `@Size`, `@Pattern`) and extended the global exception handler to cover `MethodArgumentNotValidException` and `HttpMessageNotReadableException`.
 ### Phase 3: Architecture Refactor
-
+ 
 - Split a monolithic `LibraryService` into per-entity services (`BookService`, `MemberService`, `LoanService`) plus a `LibraryService` orchestrator for cross-entity operations.
 - Changed `DELETE /loans` from path variables to query parameters after a discussion on REST conventions — the endpoint now takes `isbn` and `memberId` as `@RequestParam`s.
-
 ### Phase 4: Testing Suite
-
+ 
 Built out a full four-layer testing strategy, in order of increasing scope:
-
+ 
 **1. Service-layer unit tests (Mockito)**
-Full suites for `LoanServiceTest`, `BookServiceTest`, `MemberServiceTest`, `LibraryServiceTest`. Common bugs caught along the way: mocking the system-under-test instead of its dependency, asserting a [...]
-
+Full suites for `LoanServiceTest`, `BookServiceTest`, `MemberServiceTest`, `LibraryServiceTest`. Common bugs caught along the way: mocking the system-under-test instead of its dependency, asserting a mutated object against itself, simulating state changes without calling the actual state-changing method, and using `thenReturn(null)` where `thenThrow` was the correct stub.
+ 
 **2. Controller slice tests (`@WebMvcTest`)**
-Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTest` — with services mocked via `@MockBean`. Introduced a validation-testing pattern: confirming `@Valid` + `GlobalExce[...]
-
+Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTest` — with services mocked via `@MockBean`. Introduced a validation-testing pattern: confirming `@Valid` + `GlobalExceptionHandler` intercept bad requests via `verifyNoInteractions(service)`.
+ 
 **3. Repository integration tests (`@DataJpaTest`)**
-- `BookRepositoryTest`, `MemberRepositoryTest`, `LoanRepositoryTest` — each testing only *custom* derived query methods (inherited `JpaRepository` methods like `save()`/`findById()` were deliberatel[...]
-- Used `TestEntityManager.persistAndFlush()` for arrange steps, deliberately kept separate from the repository methods under test, to avoid the system-under-test also being responsible for its own tes[...]
-- **Database choice mattered here:** `BookRepositoryTest` ran against embedded H2 (safe, since `Book` has no inheritance complexity); `MemberRepositoryTest` and `LoanRepositoryTest` ran against real P[...]
-
+- `BookRepositoryTest`, `MemberRepositoryTest`, `LoanRepositoryTest` — each testing only *custom* derived query methods (inherited `JpaRepository` methods like `save()`/`findById()` were deliberately left untested, since that's testing Spring's code, not mine).
+- Used `TestEntityManager.persistAndFlush()` for arrange steps, deliberately kept separate from the repository methods under test, to avoid the system-under-test also being responsible for its own test data setup.
+- **Database choice mattered here:** `BookRepositoryTest` ran against embedded H2 (safe, since `Book` has no inheritance complexity); `MemberRepositoryTest` and `LoanRepositoryTest` ran against real PostgreSQL via `@AutoConfigureTestDatabase(replace = Replace.NONE)`, since the JOINED inheritance hierarchy was a genuine dialect-sensitive risk worth verifying against the real production database engine.
 **4. End-to-end tests (`@SpringBootTest`)**
 - Full application context, real controllers → real services → real repositories → real PostgreSQL, no mocking.
-- Used `TestRestTemplate` with `RANDOM_PORT` for maximum realism — real HTTP requests over a real embedded Tomcat instance, chosen deliberately over `MockMvc` to stay as close as possible to how a r[...]
+- Used `TestRestTemplate` with `RANDOM_PORT` for maximum realism — real HTTP requests over a real embedded Tomcat instance, chosen deliberately over `MockMvc` to stay as close as possible to how a real client would interact with the API.
 - Two end-to-end scenarios:
   - **Full member lifecycle** — register → add book → borrow → return, verifying both HTTP contract (status codes, response bodies) and actual database state at each step.
-  - **Multi-book/loan scenario** — register a member, add multiple books, borrow several, and verify state via a mix of real `GET` endpoints and direct repository assertions (since not every entity [...]
+  - **Multi-book/loan scenario** — register a member, add multiple books, borrow several, and verify state via a mix of real `GET` endpoints and direct repository assertions (since not every entity has a full search/list endpoint yet).
 - Cleanup handled via `@AfterEach`, explicitly deleting `Loan` rows before `Member`/`Book` rows to respect foreign key dependency order.
-
-### Phase 5: API Documentation
-
-- Integrated **Springdoc OpenAPI** for automatic Swagger/OpenAPI 3.0 generation from controller annotations.
-- Documented all six endpoints with `@Operation`, `@Parameter`, and `@ApiResponse` annotations.
-- Added comprehensive request/response examples and enum documentation via `@Schema` annotations.
-- Verified all DTOs and error responses appear correctly in the Swagger UI explorer.
-
 ---
-
+ 
 ## Key Design Decisions
-
+ 
 - **Soft-delete for loans** via nullable `returnDate`, preserving history instead of hard-deleting records.
-- **JOINED inheritance** for the member hierarchy, chosen deliberately over single-table or table-per-class, and specifically stress-tested against real Postgres in the test suite because of its diale[...]
+- **JOINED inheritance** for the member hierarchy, chosen deliberately over single-table or table-per-class, and specifically stress-tested against real Postgres in the test suite because of its dialect-sensitivity.
 - **Orchestrator pattern** (`LibraryService`) for operations spanning multiple entities, keeping single-entity services focused and free of cross-cutting concerns.
-- **Explicit over implicit in tests** — e.g., choosing `persistAndFlush()` over relying on JPA's implicit auto-flush, and choosing real Postgres over H2 wherever inheritance or dialect-specific beha[...]
-- **Simplicity first, escalate only when needed** — e.g., choosing `@AfterEach` manual cleanup over more complex strategies (unique per-test data, `@DirtiesContext`, etc.) because it was the simples[...]
-
+- **Explicit over implicit in tests** — e.g., choosing `persistAndFlush()` over relying on JPA's implicit auto-flush, and choosing real Postgres over H2 wherever inheritance or dialect-specific behavior was a risk, even though it cost more setup complexity.
+- **Simplicity first, escalate only when needed** — e.g., choosing `@AfterEach` manual cleanup over more complex strategies (unique per-test data, `@DirtiesContext`, etc.) because it was the simplest approach that correctly solved the actual problem, with the explicit intent to revisit if the project's complexity ever demands it.
 ---
-
+ 
 ## Lessons Learned
-
+ 
 A few of the harder-won lessons from this project, worth remembering for next time:
-
+ 
 - **`@PrePersist` only works on methods, not fields.** A field-level `@PrePersist` silently does nothing — always pair it with a dedicated `protected void onCreate()`-style method.
-- **`TestRestTemplate` runs on a separate thread than the test method itself.** Because of this, `@Transactional`-based test rollback does *not* clean up data created via real HTTP calls in `@SpringBo[...]
-- **Positional URL templating is a silent footgun.** `TestRestTemplate.delete(url, args...)` fills `{placeholders}` positionally, not by name — mismatched argument order produces no compiler error a[...]
-- **Spring Boot 4's modularization changed a lot of "it just works" behavior from Spring Boot 3.** `@DataJpaTest`, `@WebMvcTest`, and `TestRestTemplate` all moved into separate, explicitly-declared st[...]
-- **Always assert `getBody()` is non-null before chaining field access on it in HTTP response tests** — not just for null-safety, but because it turns a confusing NPE into a clear, informative test [...]
-
+- **`TestRestTemplate` runs on a separate thread than the test method itself.** Because of this, `@Transactional`-based test rollback does *not* clean up data created via real HTTP calls in `@SpringBootTest` — and worse, if manual `@AfterEach` cleanup is added *without* removing `@Transactional`, the cleanup itself silently gets rolled back too. The fix was to drop `@Transactional` entirely from HTTP-driven end-to-end tests and rely purely on explicit `@AfterEach` cleanup.
+- **Positional URL templating is a silent footgun.** `TestRestTemplate.delete(url, args...)` fills `{placeholders}` positionally, not by name — mismatched argument order produces no compiler error and no obvious runtime crash, just quietly wrong requests. Always double-check argument order matches the URL template order.
+- **Spring Boot 4's modularization changed a lot of "it just works" behavior from Spring Boot 3.** `@DataJpaTest`, `@WebMvcTest`, and `TestRestTemplate` all moved into separate, explicitly-declared starter modules — several debugging sessions in this project were spent tracing `ClassNotFoundException`/`NoSuchBeanDefinitionException` errors back to a missing module rather than a logic bug. Reading the *actual* stack trace root cause (not just the top-level error) was consistently the fastest way through these.
+- **Always assert `getBody()` is non-null before chaining field access on it in HTTP response tests** — not just for null-safety, but because it turns a confusing NPE into a clear, informative test failure message.
 ---
 
 ## Roadmap / What's Next
