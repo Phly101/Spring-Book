@@ -341,6 +341,7 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] End-to-end tests (`@SpringBootTest`)
 - [x] API documentation (Swagger/OpenAPI)
 - [x] Containerization with Docker & Docker Compose
-- [ ] adding Spring security
+- [ ] Adding Spring security
+- [ ] Deploying to AWS EC2 server
 
 
