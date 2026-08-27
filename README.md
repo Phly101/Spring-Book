@@ -21,7 +21,7 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
   - [Phase 6: Containerization with Docker](#phase-6-containerization-with-docker)
 - [Key Design Decisions](#key-design-decisions)
 - [Lessons Learned](#lessons-learned)
-- [Roadmap / What's Next](#roadmap--what's-next)
+- [Roadmap / What's Next](#roadmap--whats-next)
 
 ---
 ## Motivation & Learning Approach
@@ -36,17 +36,17 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Java 21 |
-| Framework | Spring Boot 4.x |
-| Persistence | Spring Data JPA / Hibernate |
-| Database | PostgreSQL |
-| Build Tool | Maven |
-| Testing | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
-| API Docs | Swagger/OpenAPI 3.0 |
-| Containerization | Docker & Docker Compose |
-| Security | Spring Security / JWT |
+| Layer            | Technology                                                                  |
+|------------------|-----------------------------------------------------------------------------|
+| Language         | Java 21                                                                     |
+| Framework        | Spring Boot 4.x                                                             |
+| Persistence      | Spring Data JPA / Hibernate                                                 |
+| Database         | PostgreSQL                                                                  |
+| Build Tool       | Maven                                                                       |
+| Testing          | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
+| API Docs         | Swagger/OpenAPI 3.0                                                         |
+| Containerization | Docker & Docker Compose                                                     |
+| Security         | Spring Security / JWT                                                       |
 
 ---
 
