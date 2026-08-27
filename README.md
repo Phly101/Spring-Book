@@ -46,7 +46,7 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 | Testing | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
 | API Docs | Swagger/OpenAPI 3.0 |
 | Containerization | Docker & Docker Compose |
-| Security *(deferred)* | Spring Security / JWT — deferred to a future project  |
+| Security | Spring Security / JWT |
 
 ---
 
@@ -349,6 +349,6 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] End-to-end tests (`@SpringBootTest`)
 - [x] API documentation (Swagger/OpenAPI)
 - [x] Containerization with Docker & Docker Compose
-- [ ] Portfolio packaging
+- [ ] adding Spring security
 
-**Deliberately deferred:** Spring Security / JWT authentication — this project's scope doesn't have enough of a real access-control concept to justify it. Security will instead be built properly in a coming project.
+
