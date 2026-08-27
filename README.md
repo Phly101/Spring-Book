@@ -18,9 +18,10 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
   - [Phase 3: Architecture Refactor](#phase-3-architecture-refactor)
   - [Phase 4: Testing Suite](#phase-4-testing-suite)
   - [Phase 5: API Documentation](#phase-5-api-documentation)
+  - [Phase 6: Containerization with Docker](#phase-6-containerization-with-docker)
 - [Key Design Decisions](#key-design-decisions)
 - [Lessons Learned](#lessons-learned)
-- [Roadmap / What's Next](#roadmap--whats-next)
+- [Roadmap / What's Next](#roadmap--what's-next)
 
 ---
 ## Motivation & Learning Approach
@@ -44,6 +45,7 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 | Build Tool | Maven |
 | Testing | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
 | API Docs | Swagger/OpenAPI 3.0 |
+| Containerization | Docker & Docker Compose |
 | Security *(deferred)* | Spring Security / JWT — deferred to a future project  |
 
 ---
@@ -151,7 +153,11 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
     │               ├── LoanServiceTest.java
     │               ├── LibraryServiceTest.java
     │               └── MemberServiceTest.java
-    └── pom.xml
+    ├── Dockerfile
+    ├── docker-compose.yml
+    ├── .env.example
+    ├── pom.xml
+    └── README.md
 ```
 
 **Key directories:**
@@ -242,22 +248,26 @@ A comprehensive view of the REST API endpoints available for managing books, lib
 - Built a plain Java/Kotlin **Library Management System** through six OOP phases (encapsulation → inheritance → abstraction → interfaces → polymorphism → composition/statics), deliberately alternating between Java and Kotlin to compare syntax directly.
 - Covered Kotlin fundamentals in depth (null safety, data classes, scope functions, extension functions, companion objects, coroutines overview) with Dart as the comparison baseline.
 - Watched a FreeCodeCamp JPA course independently to cover inheritance strategies, `@MappedSuperClass`, `@Embeddable`/`@EmbeddedId`, derived queries, `@Modifying`, named queries, and Specifications before diving into Spring Data JPA hands-on.
+
 ### Phase 1: Database Layer
  
 - Designed the PostgreSQL schema from scratch:
   - **JOINED inheritance** for the member hierarchy (`members` base table, `students` and `faculties` subclass tables)
   - `books` and `loans` tables with UUID primary keys, enums, `CHECK` constraints, and foreign keys
 - Annotated all five model classes as JPA entities, working through key concepts: `@Inheritance(JOINED)`, `@PrimaryKeyJoinColumn`, `@Enumerated(STRING)`, `@ManyToOne`, `updatable = false`, correct no-arg constructor access level for JPA, and why Java records can't be JPA entities.
+
 ### Phase 2: REST API Layer
  
 - Built six REST endpoints across `BookController`, `MemberController`, `LoanController`.
 - Designed a custom exception hierarchy: an abstract `MainException` base class with concrete subclasses, handled globally via `@RestControllerAdvice`.
 - Introduced DTOs as Java **records**, with dedicated mapper classes (`BookMapper`, `MemberMapper`, `LoanMapper`) to keep entities decoupled from the API surface.
 - Added Bean Validation (`@Valid`, `@NotBlank`, `@NotNull`, `@Size`, `@Pattern`) and extended the global exception handler to cover `MethodArgumentNotValidException` and `HttpMessageNotReadableException`.
+
 ### Phase 3: Architecture Refactor
  
 - Split a monolithic `LibraryService` into per-entity services (`BookService`, `MemberService`, `LoanService`) plus a `LibraryService` orchestrator for cross-entity operations.
 - Changed `DELETE /loans` from path variables to query parameters after a discussion on REST conventions — the endpoint now takes `isbn` and `memberId` as `@RequestParam`s.
+
 ### Phase 4: Testing Suite
  
 Built out a full four-layer testing strategy, in order of increasing scope:
@@ -272,6 +282,7 @@ Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTe
 - `BookRepositoryTest`, `MemberRepositoryTest`, `LoanRepositoryTest` — each testing only *custom* derived query methods (inherited `JpaRepository` methods like `save()`/`findById()` were deliberately left untested, since that's testing Spring's code, not mine).
 - Used `TestEntityManager.persistAndFlush()` for arrange steps, deliberately kept separate from the repository methods under test, to avoid the system-under-test also being responsible for its own test data setup.
 - **Database choice mattered here:** `BookRepositoryTest` ran against embedded H2 (safe, since `Book` has no inheritance complexity); `MemberRepositoryTest` and `LoanRepositoryTest` ran against real PostgreSQL via `@AutoConfigureTestDatabase(replace = Replace.NONE)`, since the JOINED inheritance hierarchy was a genuine dialect-sensitive risk worth verifying against the real production database engine.
+
 **4. End-to-end tests (`@SpringBootTest`)**
 - Full application context, real controllers → real services → real repositories → real PostgreSQL, no mocking.
 - Used `TestRestTemplate` with `RANDOM_PORT` for maximum realism — real HTTP requests over a real embedded Tomcat instance, chosen deliberately over `MockMvc` to stay as close as possible to how a real client would interact with the API.
@@ -279,6 +290,26 @@ Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTe
   - **Full member lifecycle** — register → add book → borrow → return, verifying both HTTP contract (status codes, response bodies) and actual database state at each step.
   - **Multi-book/loan scenario** — register a member, add multiple books, borrow several, and verify state via a mix of real `GET` endpoints and direct repository assertions (since not every entity has a full search/list endpoint yet).
 - Cleanup handled via `@AfterEach`, explicitly deleting `Loan` rows before `Member`/`Book` rows to respect foreign key dependency order.
+
+### Phase 5: API Documentation
+
+- Integrated **Swagger/OpenAPI 3.0** via `springdoc-openapi-starter-webmvc-ui` dependency.
+- Documented all six REST endpoints with request/response schemas, parameter descriptions, and example values.
+- Configured Swagger UI to be accessible at `http://localhost:8080/swagger-ui.html` with both endpoint and schema documentation auto-generated from controller annotations and DTOs.
+
+### Phase 6: Containerization with Docker
+
+- Created a **Dockerfile** with a multi-stage build strategy:
+  - **Build stage:** Maven image compiles and packages the application into a JAR
+  - **Runtime stage:** Lean JRE 21 image runs the compiled JAR, reducing final image size and attack surface
+- Set up **Docker Compose** to orchestrate:
+  - `backend` service — the Spring Boot application, automatically rebuilt and restarted on file changes during development
+  - `library_db` service — PostgreSQL 16 with persistent named volume for data durability
+  - Health checks ensuring the database is ready before the backend attempts connections
+- Created `.env.example` template for configuration management (database credentials, Spring profile, port mappings).
+- Documented the full Docker workflow: copying `.env.example` → `.env`, running `docker-compose up --build`, and stopping/cleanup via `docker-compose down` (with optional `-v` to remove volumes).
+- Key learnings: multi-stage builds reduce image overhead, health checks prevent race conditions between database startup and application initialization, and named volumes persist data across container restarts, eliminating data loss on `down`/`up` cycles.
+
 ---
  
 ## Key Design Decisions
@@ -288,6 +319,9 @@ Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTe
 - **Orchestrator pattern** (`LibraryService`) for operations spanning multiple entities, keeping single-entity services focused and free of cross-cutting concerns.
 - **Explicit over implicit in tests** — e.g., choosing `persistAndFlush()` over relying on JPA's implicit auto-flush, and choosing real Postgres over H2 wherever inheritance or dialect-specific behavior was a risk, even though it cost more setup complexity.
 - **Simplicity first, escalate only when needed** — e.g., choosing `@AfterEach` manual cleanup over more complex strategies (unique per-test data, `@DirtiesContext`, etc.) because it was the simplest approach that correctly solved the actual problem, with the explicit intent to revisit if the project's complexity ever demands it.
+- **Multi-stage Docker builds** to keep container images lean and reduce deployment overhead.
+- **Docker Compose for local development** — a single `docker-compose up --build` command replaces manual database setup, configuration management, and port mapping, improving developer experience and onboarding speed.
+
 ---
  
 ## Lessons Learned
@@ -299,6 +333,9 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - **Positional URL templating is a silent footgun.** `TestRestTemplate.delete(url, args...)` fills `{placeholders}` positionally, not by name — mismatched argument order produces no compiler error and no obvious runtime crash, just quietly wrong requests. Always double-check argument order matches the URL template order.
 - **Spring Boot 4's modularization changed a lot of "it just works" behavior from Spring Boot 3.** `@DataJpaTest`, `@WebMvcTest`, and `TestRestTemplate` all moved into separate, explicitly-declared starter modules — several debugging sessions in this project were spent tracing `ClassNotFoundException`/`NoSuchBeanDefinitionException` errors back to a missing module rather than a logic bug. Reading the *actual* stack trace root cause (not just the top-level error) was consistently the fastest way through these.
 - **Always assert `getBody()` is non-null before chaining field access on it in HTTP response tests** — not just for null-safety, but because it turns a confusing NPE into a clear, informative test failure message.
+- **Docker Compose health checks are essential for multi-container workflows.** Without them, the application container starts before PostgreSQL is ready, leading to connection timeouts and cryptic startup errors. A simple health check on the database service eliminates this entire class of race condition.
+- **Environment variable files (`.env`) reduce configuration friction.** Templating a `.env.example` and documenting the setup process ensures new developers can get the entire stack running with minimal manual configuration.
+
 ---
 
 ## Roadmap / What's Next
@@ -311,6 +348,7 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] Repository integration tests (`@DataJpaTest`)
 - [x] End-to-end tests (`@SpringBootTest`)
 - [x] API documentation (Swagger/OpenAPI)
+- [x] Containerization with Docker & Docker Compose
 - [ ] Portfolio packaging
 
 **Deliberately deferred:** Spring Security / JWT authentication — this project's scope doesn't have enough of a real access-control concept to justify it. Security will instead be built properly in a coming project.
