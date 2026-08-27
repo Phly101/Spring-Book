@@ -101,14 +101,6 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
     │   │   │   ├── exception/
     │   │   │   │   ├── handler/
     │   │   │   │   │   └── GlobalExceptionHandler.java
-    │   │   │   │   ├── BookAlreadyBorrowedException.java
-    │   │   │   │   ├── BookAlreadyExistsException.java
-    │   │   │   │   ├── BookCurrentlyBorrowedException.java
-    │   │   │   │   ├── BookNotFoundException.java
-    │   │   │   │   ├── DuplicateMemberException.java
-    │   │   │   │   ├── LoanNotFoundException.java
-    │   │   │   │   ├── MainException.java
-    │   │   │   │   └── MemberNotFoundException.java
     │   │   │   ├── mapper/
     │   │   │   │   ├── BookMapper.java
     │   │   │   │   ├── LoanMapper.java
