@@ -3,7 +3,6 @@ package com.phly101.library.model;
 import com.phly101.library.model.enums.MemberType;
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 

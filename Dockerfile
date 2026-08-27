@@ -1,5 +1,5 @@
 FROM maven:3.9.16-eclipse-temurin-21-alpine AS builder
-LABEL maintainer ="Basel_El_Rafei"
+LABEL maintainer="Basel_El_Rafei"
 WORKDIR /app
 COPY library/pom.xml .
 RUN mvn dependency:go-offline

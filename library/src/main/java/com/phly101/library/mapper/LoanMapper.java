@@ -1,6 +1,5 @@
 package com.phly101.library.mapper;
 
-import com.phly101.library.dto.loan.CreateLoanRequest;
 import com.phly101.library.dto.loan.LoanResponse;
 import com.phly101.library.model.Book;
 import com.phly101.library.model.Loan;
