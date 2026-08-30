@@ -26,16 +26,25 @@ public class Book implements Borrowable {
     private boolean available = true;
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+    @Column(name = "publish_date")
+    private LocalDateTime publishDate;
+    @Column(name = "number_of_pages")
+    private int numberOfPages;
+    @Column(name = "cover_image")
+    private String coverImage;
 
     // required by JPA
     protected Book() {
     }
 
     // constructor
-    public Book(String title, String author, String isbn) {
+    public Book(String title, String author, String isbn, LocalDateTime publishDate, int numberOfPages, String coverImage) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
+        this.publishDate = publishDate;
+        this.numberOfPages = numberOfPages;
+        this.coverImage = coverImage;
     }
     //Getters
 
@@ -53,6 +62,18 @@ public class Book implements Borrowable {
 
     public String getIsbn() {
         return this.isbn;
+    }
+
+    public LocalDateTime getPublishDate() {
+        return publishDate;
+    }
+
+    public int getNumberOfPages() {
+        return numberOfPages;
+    }
+
+    public String getCoverImage() {
+        return coverImage;
     }
     // setters
 
@@ -106,6 +127,7 @@ public class Book implements Borrowable {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
