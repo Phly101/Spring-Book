@@ -8,7 +8,7 @@ import com.phly101.library.repository.BookRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public class BookService {
     private final BookRepository bookRepository;
     private final LoanService loanService;
 
-    public BookService(BookRepository bookRepository,LoanService loanService) {
+    public BookService(BookRepository bookRepository, LoanService loanService) {
         this.bookRepository = bookRepository;
         this.loanService = loanService;
     }
@@ -30,6 +30,14 @@ public class BookService {
         }
     }
 
+    public List<Book> findAllBooksByIsbn(List<String> isbn) {
+        if (isbn != null && !isbn.isEmpty()) {
+            return bookRepository.findByIsbnIn(isbn);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
     public Book addBook(Book book) {
         if (findBookByIsbn(book.getIsbn()).isPresent()) {
             throw new BookAlreadyExistsException(book.getIsbn());
@@ -37,14 +45,17 @@ public class BookService {
         return bookRepository.save(book);
     }
 
-    public List<Book> addBooks(Book... books) {
-        for (Book book : books) {
-            if (findBookByIsbn(book.getIsbn()).isPresent()) {
-                throw new BookAlreadyExistsException(book.getIsbn());
-            }
+    @Transactional
+    public List<Book> addBooks(List<Book> books) {
+        List<String> requestedIsbns = books.stream().map(Book::getIsbn).toList();
+        List<Book> existingBooks = findAllBooksByIsbn(requestedIsbns);
+        if (!existingBooks.isEmpty()) {
+            List<String> duplicateIsbns = existingBooks.stream().map(Book::getIsbn).toList();
+            throw new BookAlreadyExistsException(duplicateIsbns.toString());
         }
-        return bookRepository.saveAll(Arrays.asList(books));
+        return bookRepository.saveAll(books);
     }
+
     @Transactional
     public Book updateBook(String isbn, String title, String author) {
         Book book = findBookByIsbn(isbn).orElseThrow(() -> new BookNotFoundException(isbn));

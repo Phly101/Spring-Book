@@ -1,4 +1,5 @@
 package com.phly101.library.controller;
+
 import com.phly101.library.dto.book.BookResponse;
 import com.phly101.library.dto.book.CreateBookRequest;
 import com.phly101.library.dto.book.UpdateBookRequest;
@@ -11,11 +12,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @Tag(name = "Books", description = "Endpoints for managing the library's book catalog")
@@ -42,6 +45,24 @@ public class BookController {
         bookService.addBook(newBook);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{isbn}").buildAndExpand(newBook.getIsbn()).toUri();
         return ResponseEntity.created(location).body(BookMapper.toBookResponse(newBook));
+
+    }
+    @Operation(
+            summary = "Add a book batch to the catalog",
+            description = "Creates a  book list record with  unique ISBNs. Fails if a book with the same ISBN already exists."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Books created successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation failed (missing/invalid title, author, or ISBN)"),
+            @ApiResponse(responseCode = "409", description = "A book with this ISBN already exists")
+    })
+
+    @PostMapping("/books/batch")
+    public ResponseEntity<List<BookResponse>> createBooksList(@Valid @RequestBody List<CreateBookRequest> createBooksRequest) {
+        final List<Book> books = BookMapper.toEntities(createBooksRequest);
+        final List<Book> savedBooks = bookService.addBooks(books);
+        final List<BookResponse> response = BookMapper.toBooksResponse(savedBooks);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
     }
 
