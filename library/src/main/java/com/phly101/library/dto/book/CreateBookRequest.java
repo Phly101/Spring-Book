@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDateTime;
+
 
 @Schema(description = "Request payload to create a new book in the catalog")
 public record CreateBookRequest(
@@ -19,5 +21,13 @@ public record CreateBookRequest(
         @Schema(description = "The ISBN identifier (must be 10 or 13 digits)", example = "978-0-13-110362-7")
         @NotBlank(message = "isbn can't be empty")
         @Pattern(regexp = "\\d{10}|\\d{13}", message = "ISBN must be 10 or 13 digits")
-        String isbn) {
+        String isbn,
+        @Schema(description = "The publish date of the book", example = "3/9/2003")
+        LocalDateTime publish_date,
+        @Schema(description = "The number of book pages", example = "250")
+        int number_of_pages,
+        @Schema(description = "The Cover image of the book", example = "https://coverimageurl")
+        String cover_image
+
+) {
 }
