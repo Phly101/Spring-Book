@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +43,8 @@ class LibraryServiceTest {
     }
 
     private Book addTestBook() {
-        return new Book("Fallen Grace", "William Becett", "0987654321123");
+        return new Book("Fallen Grace", "William Becett", "0987654321123",
+                LocalDateTime.of(2020, 1, 15, 0, 0), 320, "https://example.com/fallen-grace.jpg");
     }
 
     @Nested

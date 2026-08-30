@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +35,8 @@ class LoanServiceTest {
     }
 
     private Book addTestBook() {
-        return new Book("Trail of the Tyrant", "Basel", "0987654321123");
+        return new Book("Trail of the Tyrant", "Basel", "0987654321123",
+                LocalDateTime.of(2019, 6, 20, 0, 0), 410, "https://example.com/trail-of-the-tyrant.jpg");
 
     }
 

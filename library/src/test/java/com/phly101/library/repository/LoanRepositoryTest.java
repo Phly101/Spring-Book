@@ -11,6 +11,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +31,8 @@ public class LoanRepositoryTest {
     }
 
     private Book addTestBook() {
-        return new Book("Trail of the Tyrant", "Basel", "0987654321123");
+        return new Book("Trail of the Tyrant", "Basel", "0987654321123",
+                LocalDateTime.of(2019, 6, 20, 0, 0), 410, "https://example.com/trail-of-the-tyrant.jpg");
 
     }
 

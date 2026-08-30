@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,13 +32,15 @@ public class BookServiceTest {
 
 
     private Book addTestBook() {
-        return new Book("Fallen Grace", "William Becett", "0987654321123");
+        return new Book("Fallen Grace", "William Becett", "0987654321123",
+                LocalDateTime.of(2020, 1, 15, 0, 0), 320, "https://example.com/fallen-grace.jpg");
     }
 
     private List<Book> addTestBooks() {
         List<Book> books = new ArrayList<>();
         books.add(addTestBook());
-        books.add(new Book("Tyrant's return", "David Daniub ", "098765437784"));
+        books.add(new Book("Tyrant's return", "David Daniub ", "098765437784",
+                LocalDateTime.of(2021, 5, 10, 0, 0), 420, "https://example.com/tyrants-return.jpg"));
         return books;
     }
 
@@ -114,7 +117,7 @@ public class BookServiceTest {
             }
             when(bookRepository.saveAll(anyList())).thenReturn(books);
             //act
-            List<Book> result = bookService.addBooks(books.toArray(new Book[0]));
+            List<Book> result = bookService.addBooks(books);
             //assert
             assertEquals(books, result);
         }
@@ -128,7 +131,7 @@ public class BookServiceTest {
             when(bookRepository.findByIsbn(books.get(1).getIsbn())).thenReturn(Optional.of(books.get(1)));
             //act+assert
             assertThrows(BookAlreadyExistsException.class, () ->
-                    bookService.addBooks(books.toArray(new Book[0])));
+                    bookService.addBooks(books));
             verify(bookRepository, never()).saveAll(any());
         }
     }

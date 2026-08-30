@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -36,7 +37,8 @@ public class BookControllerTest {
         @Test
         void BookController_CreateBook_WhenTitleBlank_ReturnsBadRequest() throws Exception {
             // arrange
-            CreateBookRequest invalidBook = new CreateBookRequest("", "Robert Martin", "1234567890");
+            CreateBookRequest invalidBook = new CreateBookRequest("", "Robert Martin", "1234567890",
+                    LocalDateTime.of(2008, 8, 1, 0, 0), 500, "https://example.com/clean-code.jpg");
 
             // act+assert
             mockMvc.perform(post("/books")
@@ -51,7 +53,8 @@ public class BookControllerTest {
         @Test
         void BookController_findBookById_WhenBookExist() throws Exception {
             // arrange
-            CreateBookRequest mockBook = new CreateBookRequest("Clean code", "Robert Martin", "1234567890");
+            CreateBookRequest mockBook = new CreateBookRequest("Clean code", "Robert Martin", "1234567890",
+                    LocalDateTime.of(2008, 8, 1, 0, 0), 500, "https://example.com/clean-code.jpg");
             when(bookService.findBookByIsbn("1234567890")).thenReturn(Optional.of(BookMapper.toEntity(mockBook)));
             //act + assert
             mockMvc.perform(get("/books/1234567890")).andExpect(status().isOk())
@@ -75,7 +78,8 @@ public class BookControllerTest {
         @Test
         void BookController_CreateBook_Successfully() throws Exception {
             // arrange
-            CreateBookRequest mockBook = new CreateBookRequest("Clean code", "Robert Martin", "1234567890");
+            CreateBookRequest mockBook = new CreateBookRequest("Clean code", "Robert Martin", "1234567890",
+                    LocalDateTime.of(2008, 8, 1, 0, 0), 500, "https://example.com/clean-code.jpg");
             // act + assert
             mockMvc.perform(post("/books")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -96,7 +100,8 @@ public class BookControllerTest {
         void BookController_UpdateBook_Successfully() throws Exception {
             // arrange
             UpdateBookRequest updateBookRequest = new UpdateBookRequest("Balawdawdwawda", "Nonadwadwawwa");
-            Book book = new Book(updateBookRequest.title(), updateBookRequest.author(), "1234567890111");
+            Book book = new Book(updateBookRequest.title(), updateBookRequest.author(), "1234567890111",
+                    LocalDateTime.of(2012, 9, 10, 0, 0), 650, "https://example.com/update-book.jpg");
             when(bookService.updateBook("1234567890111", updateBookRequest.title(), updateBookRequest.author())).thenReturn(book);
             // act+assert
             mockMvc.perform(put("/books/1234567890111")

@@ -21,6 +21,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDateTime;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -60,7 +62,8 @@ public class LibraryEndToEndTest {
         assertThat(responseMember.getBody().memberId()).isEqualTo("tester/001");
         assertThat(responseMember.getBody().name()).isEqualTo("Tester");
 
-        CreateBookRequest bookRequest = new CreateBookRequest("BolaBook", "Basel", "0987654321000");
+        CreateBookRequest bookRequest = new CreateBookRequest("BolaBook", "Basel", "0987654321000",
+                LocalDateTime.of(2022, 3, 15, 0, 0), 300, "https://example.com/bola-book.jpg");
 
         ResponseEntity<BookResponse> responseBook =
                 restTemplate.postForEntity("/books", bookRequest, BookResponse.class);
@@ -100,9 +103,12 @@ public class LibraryEndToEndTest {
         assertThat(memberResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 
-        CreateBookRequest book1 = new CreateBookRequest("Book One", "Author A", "1111111111111");
-        CreateBookRequest book2 = new CreateBookRequest("Book Two", "Author B", "2222222222222");
-        CreateBookRequest book3 = new CreateBookRequest("Book Three", "Author C", "3333333333333");
+        CreateBookRequest book1 = new CreateBookRequest("Book One", "Author A", "1111111111111",
+                LocalDateTime.of(2020, 1, 1, 0, 0), 200, "https://example.com/book-one.jpg");
+        CreateBookRequest book2 = new CreateBookRequest("Book Two", "Author B", "2222222222222",
+                LocalDateTime.of(2020, 2, 2, 0, 0), 220, "https://example.com/book-two.jpg");
+        CreateBookRequest book3 = new CreateBookRequest("Book Three", "Author C", "3333333333333",
+                LocalDateTime.of(2020, 3, 3, 0, 0), 240, "https://example.com/book-three.jpg");
 
         ResponseEntity<BookResponse> book1Response = restTemplate.postForEntity("/books", book1, BookResponse.class);
         ResponseEntity<BookResponse> book2Response = restTemplate.postForEntity("/books", book2, BookResponse.class);

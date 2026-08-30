@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -55,7 +56,8 @@ public class LoanControllerTest {
             // arrange
             CreateLoanRequest mockLoan = new CreateLoanRequest("tester/123", "1234567891");
             Member member = new Student("tester1", "tester/123");
-            Book book = new Book("Trail of the Tyrant", "Basel", "1234567891");
+            Book book = new Book("Trail of the Tyrant", "Basel", "1234567891",
+                    LocalDateTime.of(2019, 6, 20, 0, 0), 410, "https://example.com/trail-of-the-tyrant.jpg");
             Loan loan = new Loan(member, book, LocalDate.now(), LocalDate.now().plusDays(14));
             when(libraryService.borrowBook(mockLoan.memberId(), mockLoan.isbn())).thenReturn(loan);
             // act+assert
