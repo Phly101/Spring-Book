@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -112,13 +113,14 @@ public class BookServiceTest {
         void BookService_AddBooksSuccessfully_Test() {
             // arrange
             List<Book> books = addTestBooks();
-            for (Book book : books) {
-                when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.empty());
-            }
+            List<String> isbns = books.stream().map(Book::getIsbn).toList();
+            when(bookRepository.findByIsbnIn(isbns)).thenReturn(Collections.emptyList());
             when(bookRepository.saveAll(anyList())).thenReturn(books);
-            //act
+
+            // act
             List<Book> result = bookService.addBooks(books);
-            //assert
+
+            // assert
             assertEquals(books, result);
         }
 
@@ -126,10 +128,11 @@ public class BookServiceTest {
         void BookService_AddDuplicateBooks_Test() {
             // arrange
             List<Book> books = addTestBooks();
-            // first book is new, second book already exists
-            when(bookRepository.findByIsbn(books.get(0).getIsbn())).thenReturn(Optional.empty());
-            when(bookRepository.findByIsbn(books.get(1).getIsbn())).thenReturn(Optional.of(books.get(1)));
-            //act+assert
+            List<String> isbns = books.stream().map(Book::getIsbn).toList();
+
+            when(bookRepository.findByIsbnIn(isbns)).thenReturn(List.of(books.get(1)));
+
+            // act + assert
             assertThrows(BookAlreadyExistsException.class, () ->
                     bookService.addBooks(books));
             verify(bookRepository, never()).saveAll(any());
