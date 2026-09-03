@@ -1,6 +1,6 @@
 # Spring-Book — Library Management System
 
-A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This README documents the full journey from plain Java through OOP concepts to Spring Boot, including architecture decisions, testing strategy, and deployment with Docker.
+A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This README documents the full journey from plain Java through OOP concepts to Spring Boot, including architecture decisions, testing strategy, external integrations, and deployment with Docker.
 
 ---
 
@@ -19,6 +19,8 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
   - [Phase 4: Testing Suite](#phase-4-testing-suite)
   - [Phase 5: API Documentation](#phase-5-api-documentation)
   - [Phase 6: Containerization with Docker](#phase-6-containerization-with-docker)
+  - [Phase 7: Open Library Integration](#phase-7-open-library-integration)
+  - [Phase 8: GraphQL Query Layer](#phase-8-graphql-query-layer)
 - [Key Design Decisions](#key-design-decisions)
 - [Lessons Learned](#lessons-learned)
 - [Roadmap / What's Next](#roadmap--whats-next)
@@ -38,13 +40,15 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 
 | Layer            | Technology                                                                  |
 |------------------|-----------------------------------------------------------------------------|
-| Language         | Java 21                                                                     |
+| Language         | Java 21 / Kotlin 1.9                                                        |
 | Framework        | Spring Boot 4.x                                                             |
 | Persistence      | Spring Data JPA / Hibernate                                                 |
 | Database         | PostgreSQL                                                                  |
 | Build Tool       | Maven                                                                       |
 | Testing          | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
 | API Docs         | Swagger/OpenAPI 3.0                                                         |
+| Query API        | GraphQL (Spring GraphQL / graphql-java)                                      |
+| External APIs    | Open Library API (REST client)                                              |
 | Containerization | Docker & Docker Compose                                                     |
 | Security         | Spring Security / JWT                                                       |
 
@@ -56,9 +60,11 @@ The project follows **Clean Architecture** principles — the same mental model 
 
 ```
 Controller Layer   → REST endpoints, request/response DTOs, validation
+GraphQL Layer      → Query resolvers, schema-driven type mapping
 Service Layer      → Business logic, split by entity + an orchestrator for cross-entity ops
 Repository Layer   → Spring Data JPA interfaces, custom derived queries
 Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
+Integration Layer  → External API clients (Open Library), data transformation
 ```
 
 **Core entities:** `Book`, `Member` (base class), `Student` / `Faculty` (subclasses via JOINED inheritance), `Loan`.
@@ -66,6 +72,12 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
 **Service layer structure:**
 - `BookService`, `MemberService`, `LoanService` — own their respective entity's logic
 - `LibraryService` — orchestrator for cross-entity operations (`borrowBook`, `returnBook`, `getTotalTransactions`), following a rule I proposed myself: `LoanService` owns active-loan existence checks, while `LibraryService` orchestrates the high-level borrow/return workflows.
+
+**External integrations:**
+- `OpenLibraryClient` — REST client wrapping the Open Library API for book discovery by ISBN or query
+- `OpenLibraryMapper` — transforms Open Library responses into `CreateBookRequest` DTOs
+- `OpenLibraryImportRunner` — Spring profile-driven batch importer (activated with `spring.profiles.active=import`)
+
 **Soft-delete pattern:** Loan history is preserved via a nullable `returnDate` column rather than physically deleting loan records — an active loan is one where `returnDate IS NULL`.
  
 
@@ -123,9 +135,31 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
     │   │   │   │   ├── LibraryService.java
     │   │   │   │   └── MemberService.java
     │   │   │   └── LibraryApplication.java
+    │   │   ├── kotlin/com/phly101/library/
+    │   │   │   ├── dto/
+    │   │   │   │   ├── MemberProfileDto.kt
+    │   │   │   │   └── LoanHistoryItemDto.kt
+    │   │   │   ├── graphql/
+    │   │   │   │   └── MemberGraphQLResolver.kt
+    │   │   │   ├── integration/
+    │   │   │   │   └── openlibrary/
+    │   │   │   │       ├── OpenLibraryClient.kt
+    │   │   │   │       ├── OpenLibraryMapper.kt
+    │   │   │   │       ├── OpenLibraryImportRunner.kt
+    │   │   │   │       ├── PublishDateFormatter.kt
+    │   │   │   │       └── dto/
+    │   │   │   │           ├── SearchResponse.kt
+    │   │   │   │           ├── SearchDoc.kt
+    │   │   │   │           ├── OpenLibraryBookData.kt
+    │   │   │   │           ├── OpenLibraryAuthor.kt
+    │   │   │   │           └── OpenLibraryCover.kt
+    │   │   │   └── mapper/
+    │   │   │       └── Mapper.kt
     │   │   └── resources/
     │   │       ├── application.yml
-    │   │       └── banner.txt
+    │   │       ├── banner.txt
+    │   │       └── graphql/
+    │   │           └── schema.graphqls
     │   └── test/
     │       └── java/com/phly101/library/
     │           ├── controller/
@@ -152,12 +186,15 @@ Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
 
 **Key directories:**
 - `controller/` — REST endpoints for Books, Members, and Loans
-- `dto/` — Request/response records organized by entity type
+- `graphql/` — GraphQL resolvers and query handlers (Kotlin)
+- `integration/openlibrary/` — Open Library API client, mappers, and batch import runner (Kotlin)
+- `dto/` — Request/response records and Kotlin data classes organized by entity type
 - `exception/` — Custom exception hierarchy and global exception handler
-- `mapper/` — Entity ↔ DTO converters
+- `mapper/` — Entity ↔ DTO converters (Java and Kotlin)
 - `model/` — JPA entities and enums
 - `repository/` — Spring Data JPA interfaces with custom queries
 - `service/` — Business logic organized by entity + orchestrator
+- `resources/graphql/` — GraphQL schema definition files
 - `test/` — Mirror structure of main codebase: controller slices, service unit tests, repository integration tests, and end-to-end tests
 
 ---
@@ -181,6 +218,32 @@ All six REST endpoints are documented with request/response schemas, parameter d
 **Loans:**
 - `POST /loans` — Borrow a book (creates an active loan)
 - `DELETE /loans` — Return a book (closes the loan via soft-delete)
+
+### GraphQL Endpoint
+
+**Query endpoint:** `POST /graphql`
+
+**Available queries:**
+- `memberProfile(memberId: ID!)` — Fetch a member's profile including their full loan history with book details (ISBN, title, borrow/return dates)
+
+**Example query:**
+```graphql
+query {
+  memberProfile(memberId: "member-uuid-here") {
+    id
+    name
+    memberType
+    loanHistory {
+      loanId
+      bookTitle
+      bookIsbn
+      returnDate
+    }
+  }
+}
+```
+
+Interactive GraphQL explorer available at `http://localhost:8080/graphiql` when the application is running.
 
 ### Request/Response Schemas
 
@@ -238,22 +301,26 @@ A comprehensive view of the REST API endpoints available for managing books, lib
 - Built a plain Java/Kotlin **Library Management System** through six OOP phases (encapsulation → inheritance → abstraction → interfaces → polymorphism → composition/statics), deliberately sequenced to mirror how concepts build on each other in real-world systems.
 - Covered Kotlin fundamentals in depth (null safety, data classes, scope functions, extension functions, companion objects, coroutines overview) with Dart as the comparison baseline.
 - Watched a FreeCodeCamp JPA course independently to cover inheritance strategies, `@MappedSuperClass`, `@Embeddable`/`@EmbeddedId`, derived queries, `@Modifying`, named queries, and Specification-based dynamic predicates.
+
 ### Phase 1: Database Layer
  
 - Designed the PostgreSQL schema from scratch:
    - **JOINED inheritance** for the member hierarchy (`members` base table, `students` and `faculties` subclass tables)
    - `books` and `loans` tables with UUID primary keys, enums, `CHECK` constraints, and foreign keys
 - Annotated all five model classes as JPA entities, working through key concepts: `@Inheritance(JOINED)`, `@PrimaryKeyJoinColumn`, `@Enumerated(STRING)`, `@ManyToOne`, `updatable = false`, correct use of `@Column` for optional fields, and bidirectional relationship pitfalls.
+
 ### Phase 2: REST API Layer
  
 - Built six REST endpoints across `BookController`, `MemberController`, `LoanController`.
 - Designed a custom exception hierarchy: an abstract `MainException` base class with concrete subclasses, handled globally via `@RestControllerAdvice`.
 - Introduced DTOs as Java **records**, with dedicated mapper classes (`BookMapper`, `MemberMapper`, `LoanMapper`) to keep entities decoupled from the API surface.
 - Added Bean Validation (`@Valid`, `@NotBlank`, `@NotNull`, `@Size`, `@Pattern`) and extended the global exception handler to cover `MethodArgumentNotValidException` and `HttpMessageNotReadableException` for comprehensive error feedback.
+
 ### Phase 3: Architecture Refactor
  
 - Split a monolithic `LibraryService` into per-entity services (`BookService`, `MemberService`, `LoanService`) plus a `LibraryService` orchestrator for cross-entity operations.
 - Changed `DELETE /loans` from path variables to query parameters after a discussion on REST conventions — the endpoint now takes `isbn` and `memberId` as `@RequestParam`s.
+
 ### Phase 4: Testing Suite
  
 Built out a full four-layer testing strategy, in order of increasing scope:
@@ -268,6 +335,7 @@ Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTe
 - `BookRepositoryTest`, `MemberRepositoryTest`, `LoanRepositoryTest` — each testing only *custom* derived query methods (inherited `JpaRepository` methods like `save()`/`findById()` were deliberately excluded to avoid testing framework code).
 - Used `TestEntityManager.persistAndFlush()` for arrange steps, deliberately kept separate from the repository methods under test, to avoid the system-under-test also being responsible for its own test data setup.
 - **Database choice mattered here:** `BookRepositoryTest` ran against embedded H2 (safe, since `Book` has no inheritance complexity); `MemberRepositoryTest` and `LoanRepositoryTest` ran against real PostgreSQL in a test container to stress-test JOINED inheritance queries against the actual target dialect.
+
 **4. End-to-end tests (`@SpringBootTest`)**
 - Full application context, real controllers → real services → real repositories → real PostgreSQL, no mocking.
 - Used `TestRestTemplate` with `RANDOM_PORT` for maximum realism — real HTTP requests over a real embedded Tomcat instance, chosen deliberately over `MockMvc` to stay as close as possible to how actual clients will interact with the API.
@@ -302,16 +370,55 @@ Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTe
 - **Docker Hub image:** https://hub.docker.com/r/phly101/spring_book_app
 
 ---
+
+### Phase 7: Open Library Integration
+
+- Introduced **Kotlin** for the first time in the project to explore polyglot development within a single Spring Boot application (92% Java, 7.7% Kotlin).
+- Implemented `OpenLibraryClient` using Spring's `RestClient` to fetch book metadata from the **Open Library API**:
+   - `fetchIsbnsForQuery(query)` — searches by subject/keyword and returns matching ISBNs
+   - `fetchByIsbns(isbns)` — batches ISBN lookups (chunked into 20 per request) to fetch full book data (title, authors, cover images, page counts, publish dates)
+- Built `OpenLibraryMapper` to transform Open Library's nested JSON responses into `CreateBookRequest` DTOs, including:
+   - Deduplication by title to avoid importing duplicate editions
+   - Fallback handling for missing authors (`"Unknown Author"`) and cover images
+   - Custom date parsing via `PublishDateFormatter` to normalize Open Library's varied date formats
+- Created `OpenLibraryImportRunner` as a **Spring profile-driven batch importer** (activated via `spring.profiles.active=import`):
+   - Runs automatically on application startup (implements `CommandLineRunner`)
+   - Searches for books matching `"subject:fantasy"` and imports up to 100
+   - Reports progress: ISBNs discovered, books fetched, missing entries, and final save count
+   - Integrates with existing `BookService` to persist books to the database
+- Key learnings: external API integration requires careful error handling for partial responses, batching is critical for large datasets, and polyglot development allows choosing the right language for each layer (Kotlin's null safety and data classes excelled here).
+
+---
+
+### Phase 8: GraphQL Query Layer
+
+- Integrated **Spring GraphQL** (graphql-java) to provide an alternative query interface alongside REST endpoints.
+- Defined GraphQL schema in `schema.graphqls`:
+   - `type Query` with `memberProfile(memberId: ID!)` query
+   - `type MemberProfile` exposing member details (id, name, memberType) and loan history
+   - `type LoanHistoryItem` with loan metadata (loanId, bookTitle, bookIsbn, returnDate)
+   - `enum MemberType` mapping Java enums to GraphQL
+- Implemented `MemberGraphQLResolver` (Kotlin) to resolve the `memberProfile` query:
+   - Uses existing `MemberService` and `LoanService` to fetch data
+   - Transforms entities to Kotlin data classes (`MemberProfileDto`, `LoanHistoryItemDto`) for clean DTO → GraphQL mapping
+   - Leverages Kotlin's concise syntax for data transformation (`loans.map { toLoanHistoryDto(it) }`)
+- Configured Spring GraphQL endpoint at `POST /graphql` with interactive explorer at `http://localhost:8080/graphiql`.
+- Exposed member profiles with full loan history in a single query, demonstrating GraphQL's strength in avoiding over-fetching and under-fetching compared to REST.
+- Key learnings: GraphQL schema-first design pairs well with Kotlin's type system, Spring GraphQL's annotation-based resolvers keep code minimal, and using DTOs between layers ensures clean separation even in query APIs.
+
+---
  
 ## Key Design Decisions
  
 - **Soft-delete for loans** via nullable `returnDate`, preserving history instead of hard-deleting records.
 - **JOINED inheritance** for the member hierarchy, chosen deliberately over single-table or table-per-class, and specifically stress-tested against real Postgres in the test suite because of its complexity and dialect-specific quirks.
 - **Orchestrator pattern** (`LibraryService`) for operations spanning multiple entities, keeping single-entity services focused and free of cross-cutting concerns.
+- **Polyglot language choice** — Java for core domain logic and REST controllers (mature ecosystem, static typing), Kotlin for integrations and query APIs (concise syntax, null safety, data classes).
 - **Explicit over implicit in tests** — e.g., choosing `persistAndFlush()` over relying on JPA's implicit auto-flush, and choosing real Postgres over H2 wherever inheritance or dialect-specific behavior mattered.
 - **Simplicity first, escalate only when needed** — e.g., choosing `@AfterEach` manual cleanup over more complex strategies (unique per-test data, `@DirtiesContext`, etc.) because it was the simplest approach that worked correctly.
 - **Multi-stage Docker builds** to keep container images lean and reduce deployment overhead.
 - **Docker Compose for local development** — a single `docker-compose up --build` command replaces manual database setup, configuration management, and port mapping, improving developer experience and onboarding.
+- **Profile-driven batch operations** — using Spring profiles (`spring.profiles.active=import`) to separate import logic from normal application flow, keeping the startup process clean.
 
 ---
  
@@ -326,6 +433,9 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - **Always assert `getBody()` is non-null before chaining field access on it in HTTP response tests** — not just for null-safety, but because it turns a confusing NPE into a clear, informative assertion failure message.
 - **Docker Compose health checks are essential for multi-container workflows.** Without them, the application container starts before PostgreSQL is ready, leading to connection timeouts and cryptic startup errors.
 - **Environment variable files (`.env`) reduce configuration friction.** Templating a `.env.example` and documenting the setup process ensures new developers can get the entire stack running with a single `docker-compose up --build` command.
+- **External API batching and partial responses require defensive parsing.** Open Library doesn't always return data for every ISBN requested, and publish dates come in inconsistent formats — always validate, deduplicate, and provide fallbacks.
+- **Kotlin's null safety shines in data transformation.** Using Kotlin for DTOs and mappers catches null-reference bugs at compile time that would slip past Java, especially when working with incomplete external API responses.
+- **GraphQL schema-first design keeps resolvers clean.** Defining types upfront in `schema.graphqls` forces you to think about what clients actually need, resulting in simpler resolver implementations and fewer ad-hoc projections.
 
 ---
 
@@ -340,5 +450,8 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] End-to-end tests (`@SpringBootTest`)
 - [x] API documentation (Swagger/OpenAPI)
 - [x] Containerization with Docker & Docker Compose
-- [ ] Adding Spring security
+- [x] Open Library integration (batch book import with external API)
+- [x] GraphQL query layer (schema-driven member profile queries)
+- [ ] Adding Spring Security (JWT auth, role-based access control)
 - [ ] Deploying to AWS EC2 server
+- [ ] Performance optimization (caching, query optimization, async batch processing)
