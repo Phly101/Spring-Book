@@ -94,20 +94,9 @@ Integration Layer  → External API clients (Open Library), data transformation
     │   │   │   │   └── MemberController.java
     │   │   │   ├── dto/
     │   │   │   │   ├── book/
-    │   │   │   │   │   ├── BookResponse.java
-    │   │   │   │   │   ├── CreateBookRequest.java
-    │   │   │   │   │   └── UpdateBookRequest.java
     │   │   │   │   ├── common/
-    │   │   │   │   │   ├── ErrorResponseRecord.java
-    │   │   │   │   │   └── ValidationErrorResponseRecord.java
     │   │   │   │   ├── loan/
-    │   │   │   │   │   ├── CreateLoanRequest.java
-    │   │   │   │   │   ├── LoanResponse.java
-    │   │   │   │   │   └── TransactionCountResponse.java
     │   │   │   │   └── member/
-    │   │   │   │       ├── CreateMemberRequest.java
-    │   │   │   │       ├── MemberResponse.java
-    │   │   │   │       └── UpdateMemberRequest.java
     │   │   │   ├── exception/
     │   │   │   │   ├── handler/
     │   │   │   │   │   └── GlobalExceptionHandler.java
@@ -115,16 +104,8 @@ Integration Layer  → External API clients (Open Library), data transformation
     │   │   │   │   ├── BookMapper.java
     │   │   │   │   ├── LoanMapper.java
     │   │   │   │   └── MemberMapper.java
-    │   │   │   ├── model/
+    │   │   │   ├── model
     │   │   │   │   ├── enums/
-    │   │   │   │   │   ├── FacultyRole.java
-    │   │   │   │   │   └── MemberType.java
-    │   │   │   │   ├── Book.java
-    │   │   │   │   ├── Borrowable.java
-    │   │   │   │   ├── Faculty.java
-    │   │   │   │   ├── Loan.java
-    │   │   │   │   ├── Member.java
-    │   │   │   │   └── Student.java
     │   │   │   ├── repository/
     │   │   │   │   ├── BookRepository.java
     │   │   │   │   ├── LoanRepository.java
@@ -147,12 +128,7 @@ Integration Layer  → External API clients (Open Library), data transformation
     │   │   │   │       ├── OpenLibraryMapper.kt
     │   │   │   │       ├── OpenLibraryImportRunner.kt
     │   │   │   │       ├── PublishDateFormatter.kt
-    │   │   │   │       └── dto/
-    │   │   │   │           ├── SearchResponse.kt
-    │   │   │   │           ├── SearchDoc.kt
-    │   │   │   │           ├── OpenLibraryBookData.kt
-    │   │   │   │           ├── OpenLibraryAuthor.kt
-    │   │   │   │           └── OpenLibraryCover.kt
+    │   │   │   │       └── dto
     │   │   │   └── mapper/
     │   │   │       └── Mapper.kt
     │   │   └── resources/
@@ -163,20 +139,10 @@ Integration Layer  → External API clients (Open Library), data transformation
     │   └── test/
     │       └── java/com/phly101/library/
     │           ├── controller/
-    │           │   ├── BookControllerTest.java
-    │           │   ├── LoanControllerTest.java
-    │           │   └── MemberControllerTest.java
     │           ├── librarySpringTest/
     │           │   └── LibraryEndToEndTest.java
     │           ├── repository/
-    │           │   ├── BookRepositoryTest.java
-    │           │   ├── LoanRepositoryTest.java
-    │           │   └── MemberRepositoryTest.java
     │           └── service/
-    │               ├── BookServiceTest.java
-    │               ├── LoanServiceTest.java
-    │               ├── LibraryServiceTest.java
-    │               └── MemberServiceTest.java
     ├── Dockerfile
     ├── docker-compose.yml
     ├── .env.example
