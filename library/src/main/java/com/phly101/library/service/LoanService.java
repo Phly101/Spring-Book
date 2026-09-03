@@ -5,6 +5,8 @@ import com.phly101.library.model.Loan;
 import com.phly101.library.repository.LoanRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class LoanService {
     private final LoanRepository loanRepository;
@@ -30,5 +32,8 @@ public class LoanService {
         return loanRepository.existsByBookIsbnAndReturnDateIsNull(isbn);
     }
 
+    public List<Loan> getLoanHistory(String memberId) {
+        return loanRepository.findByMemberMemberIdOrderByLoanDateDesc(memberId);
+    }
 
 }
