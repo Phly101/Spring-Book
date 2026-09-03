@@ -1,0 +1,21 @@
+type Query {
+    memberProfile(memberId: ID!): MemberProfile
+
+}
+type  MemberProfile{
+    id: ID!
+    name: String!
+    memberType: MemberType!
+    loanHistory: [LoanHistoryItem!]!
+}
+enum MemberType{
+    STUDENT
+    FACULTY
+}
+type LoanHistoryItem {
+    loanId: ID!
+    bookTitle: String!
+    bookIsbn: String!
+    returnDate: String
+}
+
