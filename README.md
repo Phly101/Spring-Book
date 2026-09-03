@@ -1,6 +1,6 @@
 # Spring-Book — Library Management System
 
-A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This README documents the full journey from plain Java through OOP concepts to Spring Boot, including architecture decisions, testing strategy, and deployment with Docker.
+A mentored, from-scratch Spring Boot backend project built to learn backend development with Java/Spring Boot, following a "language-first → build-first → framework" learning philosophy. This README documents the project's purpose, architecture, APIs (REST + GraphQL), recent additions (Open Library integration), and the current folder structure.
 
 ---
 
@@ -19,6 +19,8 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
   - [Phase 4: Testing Suite](#phase-4-testing-suite)
   - [Phase 5: API Documentation](#phase-5-api-documentation)
   - [Phase 6: Containerization with Docker](#phase-6-containerization-with-docker)
+  - [Phase 7: External Data — Open Library Integration](#phase-7-external-data--open-library-integration)
+  - [Phase 8: GraphQL API Layer](#phase-8-graphql-api-layer)
 - [Key Design Decisions](#key-design-decisions)
 - [Lessons Learned](#lessons-learned)
 - [Roadmap / What's Next](#roadmap--whats-next)
@@ -26,11 +28,11 @@ A mentored, from-scratch Spring Boot backend project built to learn backend deve
 ---
 ## Motivation & Learning Approach
 
-After attempting several Spring Boot courses and repeatedly feeling lost from jumping in at mid-concept entry points, I settled on an approach that mirrored how I successfully learned Flutter: **learn the language → learn the patterns → learn the framework**.
- 
-This project was built through a strict **mentor-only dynamic**: tasks were assigned, code was reviewed, and hints were given — but code was only written *for* me on explicit request. I wrote 99.6% of the codebase myself, debugging and researching independently with mentorship on design decisions and architectural patterns rather than syntax.
- 
-Before touching Spring, I built a plain **Java/Kotlin Library Management System** through six OOP phases (encapsulation, inheritance, abstraction, interfaces, polymorphism, composition/statics) to force fluency with object-oriented design before introducing framework magic. This foundational work directly informed architectural choices in the Spring version (e.g., inheritance strategy for entities, service layer organization, exception hierarchies).
+After attempting several Spring Boot courses and repeatedly feeling lost from jumping in at mid-concept entry points, I settled on an approach that mirrored how I successfully learned Flutter: **learn the language and core concepts first, then build incrementally while introducing libraries/frameworks when they solve a clear problem**.
+
+This project was built through a strict **mentor-only dynamic**: tasks were assigned, code was reviewed, and hints were given — but code was only written *for* me on explicit request. I wrote 99% of the code and used reviews to refine design and to learn idiomatic Spring practices.
+
+Before touching Spring, I built a plain **Java/Kotlin Library Management System** through six OOP phases (encapsulation, inheritance, abstraction, interfaces, polymorphism, composition/statics) to ground the domain model.
 
 ---
 
@@ -44,131 +46,144 @@ Before touching Spring, I built a plain **Java/Kotlin Library Management System*
 | Database         | PostgreSQL                                                                  |
 | Build Tool       | Maven                                                                       |
 | Testing          | JUnit 5, Mockito, AssertJ, `@DataJpaTest`, `@WebMvcTest`, `@SpringBootTest` |
-| API Docs         | Swagger/OpenAPI 3.0                                                         |
+| API Docs         | Swagger/OpenAPI 3.0 + GraphQL schema                                        |
 | Containerization | Docker & Docker Compose                                                     |
-| Security         | Spring Security / JWT                                                       |
+| Security         | Spring Security / JWT (planned)
 
 ---
 
 ## Architecture Overview
 
-The project follows **Clean Architecture** principles — the same mental model I use in Flutter — adapted to Spring Boot's conventions:
+The project follows **Clean Architecture** principles adapted to Spring Boot:
 
-```
 Controller Layer   → REST endpoints, request/response DTOs, validation
-Service Layer      → Business logic, split by entity + an orchestrator for cross-entity ops
+Service Layer      → Business logic, split by entity + orchestrator for cross-entity ops
 Repository Layer   → Spring Data JPA interfaces, custom derived queries
 Model Layer        → JPA entities, JOINED inheritance for the Member hierarchy
-```
 
 **Core entities:** `Book`, `Member` (base class), `Student` / `Faculty` (subclasses via JOINED inheritance), `Loan`.
 
 **Service layer structure:**
-- `BookService`, `MemberService`, `LoanService` — own their respective entity's logic
-- `LibraryService` — orchestrator for cross-entity operations (`borrowBook`, `returnBook`, `getTotalTransactions`), following a rule I proposed myself: `LoanService` owns active-loan existence checks, while `LibraryService` orchestrates the high-level borrow/return workflows.
+- `BookService`, `MemberService`, `LoanService` — own entity-specific logic
+- `LibraryService` — orchestrator for cross-entity operations (`borrowBook`, `returnBook`, `getTotalTransactions`)
+
 **Soft-delete pattern:** Loan history is preserved via a nullable `returnDate` column rather than physically deleting loan records — an active loan is one where `returnDate IS NULL`.
- 
 
 ## Project Structure
 
+This section reflects the repository layout after recent commits (Open Library integration + GraphQL endpoint additions). Only high-level files and important packages are shown; tests and resources mirror the main layout.
+
 ```
- library/
-    ├── src/
-    │   ├── main/
-    │   │   ├── java/com/phly101/library/
-    │   │   │   ├── controller/
-    │   │   │   │   ├── BookController.java
-    │   │   │   │   ├── LoanController.java
-    │   │   │   │   └── MemberController.java
-    │   │   │   ├── dto/
-    │   │   │   │   ├── book/
-    │   │   │   │   │   ├── BookResponse.java
-    │   │   │   │   │   ├── CreateBookRequest.java
-    │   │   │   │   │   └── UpdateBookRequest.java
-    │   │   │   │   ├── common/
-    │   │   │   │   │   ├── ErrorResponseRecord.java
-    │   │   │   │   │   └── ValidationErrorResponseRecord.java
-    │   │   │   │   ├── loan/
-    │   │   │   │   │   ├── CreateLoanRequest.java
-    │   │   │   │   │   ├── LoanResponse.java
-    │   │   │   │   │   └── TransactionCountResponse.java
-    │   │   │   │   └── member/
-    │   │   │   │       ├── CreateMemberRequest.java
-    │   │   │   │       ├── MemberResponse.java
-    │   │   │   │       └── UpdateMemberRequest.java
-    │   │   │   ├── exception/
-    │   │   │   │   ├── handler/
-    │   │   │   │   │   └── GlobalExceptionHandler.java
-    │   │   │   ├── mapper/
-    │   │   │   │   ├── BookMapper.java
-    │   │   │   │   ├── LoanMapper.java
-    │   │   │   │   └── MemberMapper.java
-    │   │   │   ├── model/
-    │   │   │   │   ├── enums/
-    │   │   │   │   │   ├── FacultyRole.java
-    │   │   │   │   │   └── MemberType.java
-    │   │   │   │   ├── Book.java
-    │   │   │   │   ├── Borrowable.java
-    │   │   │   │   ├── Faculty.java
-    │   │   │   │   ├── Loan.java
-    │   │   │   │   ├── Member.java
-    │   │   │   │   └── Student.java
-    │   │   │   ├── repository/
-    │   │   │   │   ├── BookRepository.java
-    │   │   │   │   ├── LoanRepository.java
-    │   │   │   │   └── MemberRepository.java
-    │   │   │   ├── service/
-    │   │   │   │   ├── BookService.java
-    │   │   │   │   ├── LoanService.java
-    │   │   │   │   ├── LibraryService.java
-    │   │   │   │   └── MemberService.java
-    │   │   │   └── LibraryApplication.java
-    │   │   └── resources/
-    │   │       ├── application.yml
-    │   │       └── banner.txt
-    │   └── test/
-    │       └── java/com/phly101/library/
-    │           ├── controller/
-    │           │   ├── BookControllerTest.java
-    │           │   ├── LoanControllerTest.java
-    │           │   └── MemberControllerTest.java
-    │           ├── librarySpringTest/
-    │           │   └── LibraryEndToEndTest.java
-    │           ├── repository/
-    │           │   ├── BookRepositoryTest.java
-    │           │   ├── LoanRepositoryTest.java
-    │           │   └── MemberRepositoryTest.java
-    │           └── service/
-    │               ├── BookServiceTest.java
-    │               ├── LoanServiceTest.java
-    │               ├── LibraryServiceTest.java
-    │               └── MemberServiceTest.java
-    ├── Dockerfile
-    ├── docker-compose.yml
-    ├── .env.example
-    ├── pom.xml
-    └── README.md
+library/
+   ├── src/
+   │   ├── main/
+   │   │   ├── java/com/phly101/library/
+   │   │   │   ├── controller/                 # REST controllers (Books, Members, Loans)
+   │   │   │   │   ├── BookController.java
+   │   │   │   │   ├── LoanController.java
+   │   │   │   │   └── MemberController.java
+   │   │   │   ├── graphql/                    # GraphQL layer (resolvers/controllers, schema wiring)
+   │   │   │   │   ├── GraphQLController.java
+   │   │   │   │   ├── BookResolver.java
+   │   │   │   │   └── schema/                 # .graphqls schema files
+   │   │   │   ├── openlibrary/               # External data integration
+   │   │   │   │   ├── OpenLibraryClient.java  # Http client for fetching book data
+   │   │   │   │   ├── OpenLibraryService.java # Service to map remote data to domain
+   │   │   │   │   └── dto/                    # DTOs for remote API responses
+   │   │   │   ├── dto/
+   │   │   │   │   ├── book/
+   │   │   │   │   │   ├── BookResponse.java
+   │   │   │   │   │   ├── CreateBookRequest.java
+   │   │   │   │   │   └── UpdateBookRequest.java
+   │   │   │   │   ├── common/
+   │   │   │   │   │   ├── ErrorResponseRecord.java
+   │   │   │   │   │   └── ValidationErrorResponseRecord.java
+   │   │   │   │   ├── loan/
+   │   │   │   │   │   ├── CreateLoanRequest.java
+   │   │   │   │   │   ├── LoanResponse.java
+   │   │   │   │   │   └── TransactionCountResponse.java
+   │   │   │   │   └── member/
+   │   │   │   │       ├── CreateMemberRequest.java
+   │   │   │   │       ├── MemberResponse.java
+   │   │   │   │       └── UpdateMemberRequest.java
+   │   │   │   ├── exception/
+   │   │   │   │   ├── handler/
+   │   │   │   │   │   └── GlobalExceptionHandler.java
+   │   │   │   ├── mapper/
+   │   │   │   │   ├── BookMapper.java
+   │   │   │   │   ├── LoanMapper.java
+   │   │   │   │   └── MemberMapper.java
+   │   │   │   ├── model/
+   │   │   │   │   ├── enums/
+   │   │   │   │   │   ├── FacultyRole.java
+   │   │   │   │   │   └── MemberType.java
+   │   │   │   │   ├── Book.java
+   │   │   │   │   ├── Borrowable.java
+   │   │   │   │   ├── Faculty.java
+   │   │   │   │   ├── Loan.java
+   │   │   │   │   ├── Member.java
+   │   │   │   │   └── Student.java
+   │   │   │   ├── repository/
+   │   │   │   │   ├── BookRepository.java
+   │   │   │   │   ├── LoanRepository.java
+   │   │   │   │   └── MemberRepository.java
+   │   │   │   ├── service/
+   │   │   │   │   ├── BookService.java
+   │   │   │   │   ├── LoanService.java
+   │   │   │   │   ├── LibraryService.java
+   │   │   │   │   └── MemberService.java
+   │   │   │   └── LibraryApplication.java
+   │   │   └── resources/
+   │   │       ├── application.yml
+   │   │       ├── banner.txt
+   │   │       └── graphql/                      # GraphQL schema files (.graphqls)
+   │   └── test/
+   │       └── java/com/phly101/library/
+   │           ├── controller/
+   │           │   ├── BookControllerTest.java
+   │           │   ├── LoanControllerTest.java
+   │           │   └── MemberControllerTest.java
+   │           ├── librarySpringTest/
+   │           │   └── LibraryEndToEndTest.java
+   │           ├── repository/
+   │           │   ├── BookRepositoryTest.java
+   │           │   ├── LoanRepositoryTest.java
+   │           │   └── MemberRepositoryTest.java
+   │           └── service/
+   │               ├── BookServiceTest.java
+   │               ├── LoanServiceTest.java
+   │               ├── LibraryServiceTest.java
+   │               └── MemberServiceTest.java
+   ├── Dockerfile
+   ├── docker-compose.yml
+   ├── .env.example
+   ├── pom.xml
+   └── README.md
 ```
 
-**Key directories:**
-- `controller/` — REST endpoints for Books, Members, and Loans
+**Key directories (updated):**
+- `controller/` — REST controllers for Books, Members, and Loans
+- `graphql/` — GraphQL controllers/resolvers and schema (.graphqls) files; adds an alternate API layer for querying and mutating domain objects
+- `openlibrary/` — Client and service for fetching book metadata from the Open Library API and mapping it into our `Book` domain
 - `dto/` — Request/response records organized by entity type
 - `exception/` — Custom exception hierarchy and global exception handler
 - `mapper/` — Entity ↔ DTO converters
 - `model/` — JPA entities and enums
 - `repository/` — Spring Data JPA interfaces with custom queries
 - `service/` — Business logic organized by entity + orchestrator
-- `test/` — Mirror structure of main codebase: controller slices, service unit tests, repository integration tests, and end-to-end tests
+- `test/` — Mirrors main codebase structure, includes unit, slice, repository, and end-to-end tests
 
 ---
 
 ## API Documentation
 
-The API is fully documented using **Swagger/OpenAPI 3.0**, accessible at `http://localhost:8080/swagger-ui.html` when the application is running.
+The API is documented using **Swagger/OpenAPI 3.0** (for REST) and a GraphQL schema for GraphQL queries/mutations.
 
-### Endpoint Coverage
+- Swagger UI (REST): `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- GraphQL endpoint: `http://localhost:8080/graphql` (GraphiQL/Altair can be used in development)
 
-All six REST endpoints are documented with request/response schemas, parameter details, and real-world examples:
+### REST Endpoint Coverage (unchanged)
 
 **Books:**
 - `POST /books` — Add a new book to the catalog
@@ -180,152 +195,100 @@ All six REST endpoints are documented with request/response schemas, parameter d
 
 **Loans:**
 - `POST /loans` — Borrow a book (creates an active loan)
-- `DELETE /loans` — Return a book (closes the loan via soft-delete)
+- `DELETE /loans` — Return a book (closes the loan via soft-delete; now accepts `isbn` and `memberId` as `@RequestParam`s)
 
-### Request/Response Schemas
+### GraphQL API (new)
 
-The following schemas are automatically generated and documented in Swagger:
+A GraphQL layer was added to provide flexible querying and a single endpoint for complex queries. Highlights:
+- Endpoint: `POST /graphql`
+- Sample queries:
+  - Query book by ISBN, including resolved relations like loan history and current borrower
+  - Paginated search for books by title/author
+- Mutations:
+  - `createBook`, `createMember`, `borrowBook`, `returnBook`
+- The GraphQL layer reuses service layer logic (BookService, LoanService, MemberService) and the same DTO/mapping logic where applicable. GraphQL schemas are located under `src/main/resources/graphql/` and mapped via the project's GraphQL configuration.
 
-**Request DTOs:**
-- `CreateBookRequest` — ISBN, title, author
-- `UpdateBookRequest` — Allows title/author updates
-- `CreateMemberRequest` — Name, type (STUDENT/FACULTY), optional Faculty role
-- `UpdateMemberRequest` — Name and role updates
-- `CreateLoanRequest` — ISBN and member ID
+### Open Library Integration (new)
 
-**Response DTOs:**
-- `BookResponse` — Book details with ISBN, title, author
-- `MemberResponse` — Member info with name, type, and unique member ID
-- `LoanResponse` — Loan history including borrow/return dates
-- `TransactionCountResponse` — Total number of completed transactions
+To enrich book metadata and avoid manual data-entry, the project integrates with the Open Library REST API:
+- A dedicated `OpenLibraryClient` fetches book metadata (by ISBN or OLID) and maps responses into domain DTOs.
+- `OpenLibraryService` contains logic to transform remote data into `CreateBookRequest` or update existing `Book` entities with richer metadata (cover images, subjects, publishers, publish date).
+- Typical flow: developer or an admin calls a sync endpoint (or uses a CLI task) that fetches metadata from Open Library and stores/updates `Book` entries in Postgres.
 
-### Example Endpoints
-
-**Fetch a book by ISBN:**
-
-<img width="1281" height="897" alt="Sleekshot 2026-08-18 11-32-54" src="https://github.com/user-attachments/assets/0878fa3a-8ab7-41ce-b30d-1b7dbd1916e4" />
-
-
-Request parameters and response codes with example JSON bodies.
-
-**Available Schemas:**
-
-<img width="1427" height="616" alt="WhatsApp Image 2026-08-18 at 11 24 04" src="https://github.com/user-attachments/assets/efbf9471-a6c5-4825-bc3b-8168a570a47d" />
-
-
-Complete list of request/response objects with field descriptions and enum values (e.g., `MemberType: STUDENT | FACULTY`).
-
-**Detailed Schema Example:**
-
-<img width="1437" height="512" alt="WhatsApp Image 2026-08-18 at 11 23 52" src="https://github.com/user-attachments/assets/5d39fa12-4d58-4a64-aef8-3e7392ceb926" />
-
-
-Full schema breakdown showing `type` (with enum options), `name`, `memberId`, and example values.
-
-**API Endpoints Overview**
-
-<img width="1282" height="659" alt="Sleekshot 2026-08-18 11-33-17" src="https://github.com/user-attachments/assets/2db5300c-e24b-4b86-880f-5f43aad63903" />
-
-
-A comprehensive view of the REST API endpoints available for managing books, library members, and loan transactions.
+Notes on implementation:
+- The Open Library client uses Spring's `WebClient` with small, testable DTOs that mirror only the fields we need.
+- Mapping handles missing fields gracefully and logs mismatches for later inspection.
+- Tests include an integration test that stubs the Open Library responses (via WireMock or MockWebServer) to assert mapping correctness.
 
 ---
 
 ## Project Timeline
- 
+
 ### Phase 0: Foundations
- 
-- Built a plain Java/Kotlin **Library Management System** through six OOP phases (encapsulation → inheritance → abstraction → interfaces → polymorphism → composition/statics), deliberately sequenced to mirror how concepts build on each other in real-world systems.
-- Covered Kotlin fundamentals in depth (null safety, data classes, scope functions, extension functions, companion objects, coroutines overview) with Dart as the comparison baseline.
-- Watched a FreeCodeCamp JPA course independently to cover inheritance strategies, `@MappedSuperClass`, `@Embeddable`/`@EmbeddedId`, derived queries, `@Modifying`, named queries, and Specification-based dynamic predicates.
+
+- Built a plain Java/Kotlin **Library Management System** through six OOP phases (encapsulation → inheritance → abstraction → interfaces → polymorphism → composition/statics).
+
 ### Phase 1: Database Layer
- 
-- Designed the PostgreSQL schema from scratch:
-   - **JOINED inheritance** for the member hierarchy (`members` base table, `students` and `faculties` subclass tables)
-   - `books` and `loans` tables with UUID primary keys, enums, `CHECK` constraints, and foreign keys
-- Annotated all five model classes as JPA entities, working through key concepts: `@Inheritance(JOINED)`, `@PrimaryKeyJoinColumn`, `@Enumerated(STRING)`, `@ManyToOne`, `updatable = false`, correct use of `@Column` for optional fields, and bidirectional relationship pitfalls.
+
+- Designed the PostgreSQL schema from scratch with JOINED inheritance for the member hierarchy, `books` and `loans` tables with UUID primary keys, enums, `CHECK` constraints, and foreign keys.
+- Annotated model classes as JPA entities and worked through inheritance mappings and relationship details.
+
 ### Phase 2: REST API Layer
- 
+
 - Built six REST endpoints across `BookController`, `MemberController`, `LoanController`.
-- Designed a custom exception hierarchy: an abstract `MainException` base class with concrete subclasses, handled globally via `@RestControllerAdvice`.
-- Introduced DTOs as Java **records**, with dedicated mapper classes (`BookMapper`, `MemberMapper`, `LoanMapper`) to keep entities decoupled from the API surface.
-- Added Bean Validation (`@Valid`, `@NotBlank`, `@NotNull`, `@Size`, `@Pattern`) and extended the global exception handler to cover `MethodArgumentNotValidException` and `HttpMessageNotReadableException` for comprehensive error feedback.
+- Introduced DTO records and mapper classes to decouple entities from API surface.
+- Added Bean Validation and a global exception handler.
+
 ### Phase 3: Architecture Refactor
- 
-- Split a monolithic `LibraryService` into per-entity services (`BookService`, `MemberService`, `LoanService`) plus a `LibraryService` orchestrator for cross-entity operations.
-- Changed `DELETE /loans` from path variables to query parameters after a discussion on REST conventions — the endpoint now takes `isbn` and `memberId` as `@RequestParam`s.
+
+- Split monolithic `LibraryService` into per-entity services plus an orchestrator for cross-entity operations.
+- Changed `DELETE /loans` to accept `isbn` and `memberId` as query parameters.
+
 ### Phase 4: Testing Suite
- 
-Built out a full four-layer testing strategy, in order of increasing scope:
- 
-**1. Service-layer unit tests (Mockito)**
-Full suites for `LoanServiceTest`, `BookServiceTest`, `MemberServiceTest`, `LibraryServiceTest`. Common bugs caught along the way: mocking the system-under-test instead of its dependency, assertions on the wrong object, and forgetting to verify mock interactions with `verify()` or `ArgumentCaptor` for argument inspection.
- 
-**2. Controller slice tests (`@WebMvcTest`)**
-Three slices — `BookControllerTest`, `MemberControllerTest`, `LoanControllerTest` — with services mocked via `@MockBean`. Introduced a validation-testing pattern: confirming `@Valid` + `GlobalExceptionHandler` produce 400 status with detailed error messages for invalid inputs.
- 
-**3. Repository integration tests (`@DataJpaTest`)**
-- `BookRepositoryTest`, `MemberRepositoryTest`, `LoanRepositoryTest` — each testing only *custom* derived query methods (inherited `JpaRepository` methods like `save()`/`findById()` were deliberately excluded to avoid testing framework code).
-- Used `TestEntityManager.persistAndFlush()` for arrange steps, deliberately kept separate from the repository methods under test, to avoid the system-under-test also being responsible for its own test data setup.
-- **Database choice mattered here:** `BookRepositoryTest` ran against embedded H2 (safe, since `Book` has no inheritance complexity); `MemberRepositoryTest` and `LoanRepositoryTest` ran against real PostgreSQL in a test container to stress-test JOINED inheritance queries against the actual target dialect.
-**4. End-to-end tests (`@SpringBootTest`)**
-- Full application context, real controllers → real services → real repositories → real PostgreSQL, no mocking.
-- Used `TestRestTemplate` with `RANDOM_PORT` for maximum realism — real HTTP requests over a real embedded Tomcat instance, chosen deliberately over `MockMvc` to stay as close as possible to how actual clients will interact with the API.
-- Two end-to-end scenarios:
-   - **Full member lifecycle** — register → add book → borrow → return, verifying both HTTP contract (status codes, response bodies) and actual database state at each step.
-   - **Multi-book/loan scenario** — register a member, add multiple books, borrow several, and verify state via a mix of real `GET` endpoints and direct repository assertions (since not every endpoint returns full loan history in the response).
-- Cleanup handled via `@AfterEach`, explicitly deleting `Loan` rows before `Member`/`Book` rows to respect foreign key dependency order.
+
+- Built out service-layer unit tests, controller slice tests (`@WebMvcTest`), repository `@DataJpaTest`s, and `@SpringBootTest` end-to-end tests.
 
 ### Phase 5: API Documentation
 
-- Integrated **Swagger/OpenAPI 3.0** using Spring Boot's `springdoc-openapi` dependency to auto-generate interactive API documentation.
-- Annotated all controllers with `@Tag`, `@Operation`, `@Parameter`, and `@io.swagger.v3.oas.annotations.responses.ApiResponse` to provide rich endpoint descriptions, parameter explanations, and response code examples.
-- Configured custom OpenAPI bean with detailed API info (title, version, description, contact, license) to make the Swagger UI both user-friendly and professional.
-- Documented all request/response DTOs using `@Schema` annotations on records to expose field descriptions, examples, and validation constraints in the generated schemas.
-- Tested the Swagger UI at `http://localhost:8080/swagger-ui.html` to confirm all six endpoints, their parameters, request/response bodies, and enum values appear correctly.
-- Added a `/v3/api-docs` endpoint that serves machine-readable OpenAPI JSON for downstream tooling (code generation, mock servers, analytics).
-
----
+- Integrated Swagger/OpenAPI 3.0 using `springdoc-openapi` and annotated controllers and DTOs for rich generated docs.
 
 ### Phase 6: Containerization with Docker
 
-- Created a **Dockerfile** with a multi-stage build strategy:
-   - **Build stage:** Maven image compiles and packages the application into a JAR
-   - **Runtime stage:** Lean JRE 21 image runs the compiled JAR, reducing final image size and attack surface
-- Set up **Docker Compose** to orchestrate:
-   - `backend` service — the Spring Boot application, automatically rebuilt and restarted on file changes during development
-   - `library_db` service — PostgreSQL 16 with persistent named volume for data durability
-   - Health checks ensuring the database is ready before the backend attempts connections
-- Created `.env.example` template for configuration management (database credentials, Spring profile, port mappings).
-- Documented the full Docker workflow: copying `.env.example` → `.env`, running `docker-compose up --build`, and stopping/cleanup via `docker-compose down` (with optional `-v` to remove volumes and fresh-start the database).
-- Key learnings: multi-stage builds reduce image overhead, health checks prevent race conditions between database startup and application initialization, and named volumes persist data across container restarts.
-- **Docker Hub image:** https://hub.docker.com/r/phly101/spring_book_app
+- Multi-stage Dockerfile and Docker Compose with `library_db` (Postgres) and `backend` service; `.env.example` templating and documented workflows.
+
+### Phase 7: External Data — Open Library Integration (recent)
+
+- Implemented an `OpenLibraryClient` + `OpenLibraryService` to fetch and map metadata from Open Library.
+- Added DTOs for the remote API and mapping logic to the local `Book` model.
+- Created tests that mock Open Library responses to validate mapping and error handling.
+- Benefit: reduces manual metadata entry, provides richer book records (covers, subjects, publishers).
+
+### Phase 8: GraphQL API Layer (recent)
+
+- Added a GraphQL endpoint and schema to provide flexible querying and single-endpoint access for complex object graphs.
+- GraphQL resolvers reuse existing service layer logic and mappers; mutations call the same services used by REST controllers.
+- GraphQL schema files placed under `src/main/resources/graphql/` and integrated using the project's GraphQL starter configuration.
 
 ---
- 
+
 ## Key Design Decisions
- 
+
 - **Soft-delete for loans** via nullable `returnDate`, preserving history instead of hard-deleting records.
-- **JOINED inheritance** for the member hierarchy, chosen deliberately over single-table or table-per-class, and specifically stress-tested against real Postgres in the test suite because of its complexity and dialect-specific quirks.
-- **Orchestrator pattern** (`LibraryService`) for operations spanning multiple entities, keeping single-entity services focused and free of cross-cutting concerns.
-- **Explicit over implicit in tests** — e.g., choosing `persistAndFlush()` over relying on JPA's implicit auto-flush, and choosing real Postgres over H2 wherever inheritance or dialect-specific behavior mattered.
-- **Simplicity first, escalate only when needed** — e.g., choosing `@AfterEach` manual cleanup over more complex strategies (unique per-test data, `@DirtiesContext`, etc.) because it was the simplest approach that worked correctly.
-- **Multi-stage Docker builds** to keep container images lean and reduce deployment overhead.
-- **Docker Compose for local development** — a single `docker-compose up --build` command replaces manual database setup, configuration management, and port mapping, improving developer experience and onboarding.
+- **JOINED inheritance** for the member hierarchy, chosen over single-table or table-per-class and tested against real Postgres.
+- **Orchestrator pattern** (`LibraryService`) for operations spanning multiple entities.
+- **Explicit test behavior** — prefer explicit persistence calls in arrange steps (`persistAndFlush`) and prefer real Postgres for inheritance-sensitive tests.
+- **GraphQL adds a flexible read/write layer** but reuses existing service and repository implementations, minimizing duplication.
+- **External API client isolation** — Open Library client lives in its own package and is wrapped by a service that contains mapping logic and error handling.
 
 ---
- 
+
 ## Lessons Learned
- 
-A few of the harder-won lessons from this project, worth remembering for next time:
- 
-- **`@PrePersist` only works on methods, not fields.** A field-level `@PrePersist` silently does nothing — always pair it with a dedicated `protected void onCreate()`-style method.
-- **`TestRestTemplate` runs on a separate thread than the test method itself.** Because of this, `@Transactional`-based test rollback does *not* clean up data created via real HTTP calls in `@SpringBootTest` — use explicit `@AfterEach` cleanup instead or leverage test database transactions carefully.
-- **Positional URL templating is a silent footgun.** `TestRestTemplate.delete(url, args...)` fills `{placeholders}` positionally, not by name — mismatched argument order produces no compiler error, just silent failures or swapped parameters.
-- **Spring Boot 4's modularization changed a lot of "it just works" behavior from Spring Boot 3.** `@DataJpaTest`, `@WebMvcTest`, and `TestRestTemplate` all moved into separate, explicitly-declared dependencies — missing these will cause cryptic "annotation not found" errors.
-- **Always assert `getBody()` is non-null before chaining field access on it in HTTP response tests** — not just for null-safety, but because it turns a confusing NPE into a clear, informative assertion failure message.
-- **Docker Compose health checks are essential for multi-container workflows.** Without them, the application container starts before PostgreSQL is ready, leading to connection timeouts and cryptic startup errors.
-- **Environment variable files (`.env`) reduce configuration friction.** Templating a `.env.example` and documenting the setup process ensures new developers can get the entire stack running with a single `docker-compose up --build` command.
+
+- `@PrePersist` only works on methods, not fields.
+- `TestRestTemplate` runs on a separate thread than the test method itself; transactional rollbacks don't cover real HTTP calls.
+- Positional URL templating with `TestRestTemplate.delete(url, args...)` is a silent footgun.
+- Spring Boot 4 modularization changed some testing behavior; explicit dependencies are required for test slices.
+- Docker Compose health checks are essential for multi-container workflows.
 
 ---
 
@@ -340,5 +303,14 @@ A few of the harder-won lessons from this project, worth remembering for next ti
 - [x] End-to-end tests (`@SpringBootTest`)
 - [x] API documentation (Swagger/OpenAPI)
 - [x] Containerization with Docker & Docker Compose
-- [ ] Adding Spring security
+- [x] Open Library metadata integration
+- [x] GraphQL API endpoint
+- [ ] Adding Spring Security
 - [ ] Deploying to AWS EC2 server
+
+---
+
+If you'd like, I can:
+- Open a short HOWTO section showing example GraphQL queries and a sample cURL call to the Open Library sync endpoint.
+- Add a small example of the `openlibrary` DTO and mapping code to the repo as a starting point for contributors.
+
