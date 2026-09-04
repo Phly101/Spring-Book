@@ -16,7 +16,7 @@ services:
 
 
   backend:
-    build: .
+    image: phly101/spring_book_app:v1
     container_name: library_backend
     depends_on:
       library_db:
